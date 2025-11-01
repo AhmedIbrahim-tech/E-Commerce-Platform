@@ -45,9 +45,6 @@ public class ProductController(IMemoryCache memoryCache) : AppControllerBase
         return NewResult(await Mediator.Send(new DeleteProductCommand(id)));
     }
 
-    /// <summary>
-    /// Example endpoint demonstrating IMemoryCache usage
-    /// </summary>
     [AllowAnonymous]
     [HttpPost("cache/example")]
     public async Task<IActionResult> CacheExample([FromBody] CacheExampleRequest request)
@@ -62,7 +59,6 @@ public class ProductController(IMemoryCache memoryCache) : AppControllerBase
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(request.ExpirationMinutes ?? 30)
             };
 
-            // Set the cached value
             memoryCache.Set(cacheKey, cacheValue, options);
 
             return Ok(new { message = "Value cached successfully", key = request.Key });
@@ -73,9 +69,6 @@ public class ProductController(IMemoryCache memoryCache) : AppControllerBase
         }
     }
 
-    /// <summary>
-    /// Example endpoint to retrieve a cached value
-    /// </summary>
     [AllowAnonymous]
     [HttpGet("cache/example/{key}")]
     public async Task<IActionResult> GetCachedExample(string key)

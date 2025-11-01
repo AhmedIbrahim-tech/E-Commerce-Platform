@@ -1,0 +1,14 @@
+
+namespace Core.Mapping.ShippingAddresses
+{
+    public partial class ShippingAddressProfile : Profile
+    {
+        public ShippingAddressProfile()
+        {
+            AddShippingAddressCommandMapping();
+            EditShippingAddressCommandMapping();
+            GetShippingAddressListQueryMapping();
+            GetSingleShippingAddressQueryMapping();
+        }
+    }
+}

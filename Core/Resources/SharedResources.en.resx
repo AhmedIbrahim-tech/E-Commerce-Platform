@@ -1,0 +1,501 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Created" xml:space="preserve">
+    <value>Created Successfully</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Deleted Successfully</value>
+  </data>
+  <data name="NotFound" xml:space="preserve">
+    <value>The object is not found</value>
+  </data>
+  <data name="BadRequest" xml:space="preserve">
+    <value>Bad Request</value>
+  </data>
+  <data name="UnprocessableEntity" xml:space="preserve">
+    <value>There are Validation Errors or Syntax Errors</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>This Field is Required</value>
+  </data>
+  <data name="Success" xml:space="preserve">
+    <value>The operation was successful</value>
+  </data>
+  <data name="UnAuthorized" xml:space="preserve">
+    <value>You are not authorized to access this resources</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Updated Successfully</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="StockQuantity" xml:space="preserve">
+    <value>StockQuantity</value>
+  </data>
+  <data name="CategoryId" xml:space="preserve">
+    <value>CategoryId</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="NotEmpty" xml:space="preserve">
+    <value>This field must not be empty</value>
+  </data>
+  <data name="MaxLengthIs100" xml:space="preserve">
+    <value>Max Length cannot exceed 100 characters.</value>
+  </data>
+  <data name="MaxLengthIs300" xml:space="preserve">
+    <value>Max Length cannot exceed 300 characters.</value>
+  </data>
+  <data name="IsExist" xml:space="preserve">
+    <value>Is already exists</value>
+  </data>
+  <data name="IsNotExist" xml:space="preserve">
+    <value>does not exist</value>
+  </data>
+  <data name="MinLengthIs6" xml:space="preserve">
+    <value>Min Length cannot less than 6 characters.</value>
+  </data>
+  <data name="InvalidFormat" xml:space="preserve">
+    <value>Format is Invalid</value>
+  </data>
+  <data name="InvalidPassword" xml:space="preserve">
+    <value>Password is Invalid</value>
+  </data>
+  <data name="PasswordsDoNotMatch" xml:space="preserve">
+    <value>Confirm password is not match to Password</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>FirstName</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>LastName</value>
+  </data>
+  <data name="UserName" xml:space="preserve">
+    <value>UserName</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="ConfirmPassword" xml:space="preserve">
+    <value>ConfirmPassword</value>
+  </data>
+  <data name="MaxLengthIs200" xml:space="preserve">
+    <value>Max Length cannot exceed 200 characters.</value>
+  </data>
+  <data name="GreaterThanZero" xml:space="preserve">
+    <value>Must be greater than zero</value>
+  </data>
+  <data name="EmailIsExist" xml:space="preserve">
+    <value>This email already exists</value>
+  </data>
+  <data name="UserNameIsExist" xml:space="preserve">
+    <value>This UserName already exists</value>
+  </data>
+  <data name="UserNameIsNotExist" xml:space="preserve">
+    <value>This UserName does not exists</value>
+  </data>
+  <data name="EmailIsNotConfirmed" xml:space="preserve">
+    <value>Your Email is not confirmed, Please Confirm it</value>
+  </data>
+  <data name="RoleName" xml:space="preserve">
+    <value>RoleName</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Update Opetation is Failed</value>
+  </data>
+  <data name="DeleteFailed" xml:space="preserve">
+    <value>Delete Opetation is Failed</value>
+  </data>
+  <data name="CreateFailed" xml:space="preserve">
+    <value>Create Opetation is Failed</value>
+  </data>
+  <data name="PasswordChangedSuccessfully" xml:space="preserve">
+    <value>The password has been successfully changed</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>CurrentPassword</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>NewPassword</value>
+  </data>
+  <data name="AlgorithmIsWrong" xml:space="preserve">
+    <value>Algorithm Is Wrong</value>
+  </data>
+  <data name="TokenIsNotExpired" xml:space="preserve">
+    <value>Token Is Not Expired</value>
+  </data>
+  <data name="RefreshTokenIsNotFound" xml:space="preserve">
+    <value>Refresh Token Is Not Found</value>
+  </data>
+  <data name="RefreshTokenIsExpired" xml:space="preserve">
+    <value>Refresh Token Is Expired</value>
+  </data>
+  <data name="Token Is Expired" xml:space="preserve">
+    <value>Token Is Expired</value>
+  </data>
+  <data name="RoleId" xml:space="preserve">
+    <value>RoleId</value>
+  </data>
+  <data name="RoleIsUsed" xml:space="preserve">
+    <value>The Role is used by users</value>
+  </data>
+  <data name="FailedToRemoveOldRoles" xml:space="preserve">
+    <value>Operation is Failed To Remove Old Roles</value>
+  </data>
+  <data name="FailedToAddNewRoles" xml:space="preserve">
+    <value>Operation is Failed To Add User Roles</value>
+  </data>
+  <data name="FailedToUpdateUserRoles" xml:space="preserve">
+    <value>Operation is Failed To Update User Roles</value>
+  </data>
+  <data name="FailedToRemoveOldClaims" xml:space="preserve">
+    <value>Operation is Failed To Remove Old Claims</value>
+  </data>
+  <data name="FailedToAddNewClaims" xml:space="preserve">
+    <value>Operation is Failed To Add User Claims</value>
+  </data>
+  <data name="FailedToUpdateUserClaims" xml:space="preserve">
+    <value>Operation is Failed To Update User Claims</value>
+  </data>
+  <data name="Message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="SendEmailFailed" xml:space="preserve">
+    <value>Operation to send email failed</value>
+  </data>
+  <data name="TryToRegisterAgain" xml:space="preserve">
+    <value>Operation Is Failed, Try To Register Again</value>
+  </data>
+  <data name="UserOrCodeIsNullOrEmpty" xml:space="preserve">
+    <value>Error Occure When Confirm Email, User or Code is Null or Empty</value>
+  </data>
+  <data name="ConfirmEmailDone" xml:space="preserve">
+    <value>Confirm Email Done</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>This User Is Not Found</value>
+  </data>
+  <data name="TryAgainLater" xml:space="preserve">
+    <value>Error Occure, Try Again Later</value>
+  </data>
+  <data name="InvaildCode" xml:space="preserve">
+    <value>Invaild Code</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="FailedToUploadImage" xml:space="preserve">
+    <value>Failed To Upload Image</value>
+  </data>
+  <data name="NoImage" xml:space="preserve">
+    <value>Please Select Image</value>
+  </data>
+  <data name="Street" xml:space="preserve">
+    <value>Street</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="ShippingAddressIsExist" xml:space="preserve">
+    <value>This Shipping Address already exists</value>
+  </data>
+  <data name="ProductId" xml:space="preserve">
+    <value>ProductId</value>
+  </data>
+  <data name="Quantity" xml:space="preserve">
+    <value>Quantity</value>
+  </data>
+  <data name="PaymentMethod" xml:space="preserve">
+    <value>PaymentMethod</value>
+  </data>
+  <data name="DeliveryMethod" xml:space="preserve">
+    <value>DeliveryMethod</value>
+  </data>
+  <data name="ShippingAddressId" xml:space="preserve">
+    <value>ShippingAddressId</value>
+  </data>
+  <data name="FailedInDiscountQuantityFromStock" xml:space="preserve">
+    <value>Failed in discount quantity from stock</value>
+  </data>
+  <data name="FailedInPaymentProcessing" xml:space="preserve">
+    <value>Failed in payment processing</value>
+  </data>
+  <data name="FailedInDeliveryProcessing" xml:space="preserve">
+    <value>Failed in delivery processing</value>
+  </data>
+  <data name="CartId" xml:space="preserve">
+    <value>CartId</value>
+  </data>
+  <data name="CartNotFoundOrEmpty" xml:space="preserve">
+    <value>This Cart is not found or empty.</value>
+  </data>
+  <data name="InvalidCombination" xml:space="preserve">
+    <value>Invalid payment and delivery combination.</value>
+  </data>
+  <data name="CannotSelectShippingAddress" xml:space="preserve">
+    <value>You cannot select a shipping address if you will pickup the order from the branch.</value>
+  </data>
+  <data name="FailedToModifyThisCart" xml:space="preserve">
+    <value>Failed to modify this cart.</value>
+  </data>
+  <data name="AddedToCart" xml:space="preserve">
+    <value>Added To The Cart Successfully</value>
+  </data>
+  <data name="ProductNotFound" xml:space="preserve">
+    <value>Product Is Not Found</value>
+  </data>
+  <data name="AnErrorOccurredWhileAddingToTheCart" xml:space="preserve">
+    <value>An Error Occurred While Adding To The Cart</value>
+  </data>
+  <data name="ItemNotFoundInCart" xml:space="preserve">
+    <value>This item was not found in your cart.</value>
+  </data>
+  <data name="ItemRemovedFromCart" xml:space="preserve">
+    <value>Item Removed From The Cart Successfully.</value>
+  </data>
+  <data name="AnErrorOccurredWhileRemovingFromTheCart" xml:space="preserve">
+    <value>An Error Occurred While Removing From The Cart.</value>
+  </data>
+  <data name="ItemQuantityUpdated" xml:space="preserve">
+    <value>Item Quantity Updated Successfully.</value>
+  </data>
+  <data name="AnErrorOccurredWhileUpdatingItemQuantity" xml:space="preserve">
+    <value>An Error  Occurred While Updating Item Quantity.</value>
+  </data>
+  <data name="PleaseLoginFirst" xml:space="preserve">
+    <value>Please log in first, so that you can add the order.</value>
+  </data>
+  <data name="TransactionFailedToCommit" xml:space="preserve">
+    <value>Transaction Failed To Commit</value>
+  </data>
+  <data name="FailedInMigrateGuestCartToCustomer" xml:space="preserve">
+    <value>Failed In Migrate Guest Cart Id To Customer Id</value>
+  </data>
+  <data name="FailedToDeleteGuestIdCookie" xml:space="preserve">
+    <value>Failed To Delete GuestId Cookie</value>
+  </data>
+  <data name="ItemAlreadyExistsInCart" xml:space="preserve">
+    <value>This Item is already in the cart.</value>
+  </data>
+  <data name="FailedInDeletingCart" xml:space="preserve">
+    <value>Failed In Deleting The Cart</value>
+  </data>
+  <data name="ShippingAddressDoesNotExist" xml:space="preserve">
+    <value>Shipping Address Does Not Exist</value>
+  </data>
+  <data name="OrderNotFound" xml:space="preserve">
+    <value>The Order Is Not Found</value>
+  </data>
+  <data name="PaymobIframeIDIsNotConfigured" xml:space="preserve">
+    <value>Paymob Iframe ID Is Not Configured</value>
+  </data>
+  <data name="PaymentTokenCannotBeNullOrEmpty" xml:space="preserve">
+    <value>Payment Token Cannot Be Null Or Empty</value>
+  </data>
+  <data name="NoCustomerFoundForOrder" xml:space="preserve">
+    <value>No Customer Found For This Order</value>
+  </data>
+  <data name="FailedToUpdateOrderAfterPaymentCreation" xml:space="preserve">
+    <value>Failed To Update Order After Payment Creation</value>
+  </data>
+  <data name="InvalidPaymobIntegrationIDInConfiguration" xml:space="preserve">
+    <value>Invalid Paymob Integration ID In Configuration</value>
+  </data>
+  <data name="FailedToProcessPaymentForOrder" xml:space="preserve">
+    <value>Failed To Process Payment For This Order</value>
+  </data>
+  <data name="InvalidOrder" xml:space="preserve">
+    <value>InvalidOrder</value>
+  </data>
+  <data name="OrderId" xml:space="preserve">
+    <value>OrderId</value>
+  </data>
+  <data name="PaymentMethodNotSelected" xml:space="preserve">
+    <value>Payment Method Not Selected</value>
+  </data>
+  <data name="ShippingAddressIsRequiredForHomeDelivery" xml:space="preserve">
+    <value>Shipping Address Is Required For Home Delivery</value>
+  </data>
+  <data name="FailedToPersistOnlinePaymentData" xml:space="preserve">
+    <value>Failed To Persist Online Payment Data</value>
+  </data>
+  <data name="FailedToConfirmCODOrder" xml:space="preserve">
+    <value>Failed To Confirm COD Order</value>
+  </data>
+  <data name="ErrorInPlacedOrder" xml:space="preserve">
+    <value>Error In Placed Order</value>
+  </data>
+  <data name="InvalidPayload" xml:space="preserve">
+    <value>InvalidPayload</value>
+  </data>
+  <data name="PaymentNotFound" xml:space="preserve">
+    <value>The Payment Is Not Found</value>
+  </data>
+  <data name="FailedToUpdateOrder" xml:space="preserve">
+    <value>Failed To Update Order</value>
+  </data>
+  <data name="FailedToDeleteCartAfterOrderSuccess" xml:space="preserve">
+    <value>Failed To Delete Cart After Order Success</value>
+  </data>
+  <data name="PaymentIntentIdMissing" xml:space="preserve">
+    <value>Payment Intent Id Missing</value>
+  </data>
+  <data name="ErrorProcessingServerCallback" xml:space="preserve">
+    <value>Error Processing Server Callback</value>
+  </data>
+  <data name="InvalidCallbackData" xml:space="preserve">
+    <value>Invalid Callback Data</value>
+  </data>
+  <data name="FailedToSendOrderConfirmationEmail" xml:space="preserve">
+    <value>Failed To Send Order Confirmation Email</value>
+  </data>
+  <data name="InvalidHMAC" xml:space="preserve">
+    <value>Invalid HMAC</value>
+  </data>
+  <data name="CategoryNotFound" xml:space="preserve">
+    <value>This Category Is NotFound</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>Id</value>
+  </data>
+  <data name="ReviewNotFound" xml:space="preserve">
+    <value>This Review Is Not Found</value>
+  </data>
+  <data name="FailedToMarkNotifyAsRead" xml:space="preserve">
+    <value>FailedToMarkNotifyAsRead</value>
+  </data>
+  <data name="FailedToMarkAllNotificationsAsRead" xml:space="preserve">
+    <value>Failed To Mark All Notifications As Read</value>
+  </data>
+  <data name="InvalidGoogleToken" xml:space="preserve">
+    <value>Invalid Google Token</value>
+  </data>
+  <data name="GoogleAuthenticationFailed" xml:space="preserve">
+    <value>Google Authentication Is Failed</value>
+  </data>
+</root>

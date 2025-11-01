@@ -1,0 +1,11 @@
+
+namespace Domain.Entities
+{
+    public class Employee : User
+    {
+        public string? Position { get; set; }
+        public decimal? Salary { get; set; }
+        public DateTimeOffset? HireDate { get; set; }
+        public string? Address { get; set; }
+    }
+}

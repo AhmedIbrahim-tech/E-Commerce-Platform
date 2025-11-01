@@ -1,0 +1,25 @@
+global using Domain.Entities;
+global using Domain.Entities.Identity;
+global using Domain.Enums;
+global using Domain.Helpers;
+global using Domain.Responses;
+global using Infrastructure.Data;
+global using Infrastructure.Infrastructure.Bases;
+global using Infrastructure.Repositories;
+global using Infrastructure.Repositories.Contract;
+global using EntityFrameworkCore.EncryptColumn.Extension;
+global using EntityFrameworkCore.EncryptColumn.Interfaces;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.EntityFrameworkCore.Storage;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Microsoft.Extensions.Caching.Distributed;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.OpenApi.Models;
+global using System.Reflection;
+global using System.Text;
+global using System.Text.Json;
+

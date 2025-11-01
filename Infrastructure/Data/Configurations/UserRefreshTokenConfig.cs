@@ -1,0 +1,36 @@
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace Infrastructure.Data.Configurations
+{
+    public class UserRefreshTokenConfig : IEntityTypeConfiguration<UserRefreshToken>
+    {
+        public void Configure(EntityTypeBuilder<UserRefreshToken> builder)
+        {
+            builder.Property(u => u.ExpiryDate)
+                .IsRequired();
+
+            builder.Property(u => u.IsUsed)
+                .HasDefaultValue(true)
+                .IsRequired();
+
+            builder.Property(u => u.IsRevoked)
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            builder.Property(u => u.AddedTime)
+                .HasDefaultValueSql("SYSDATETIMEOFFSET()")
+                .IsRequired();
+
+            builder.Property(u => u.IsUsed)
+                .IsRequired();
+
+            builder.Property(u => u.IsRevoked)
+                .IsRequired();
+
+            builder.HasOne(u => u.user)
+                .WithMany(u => u.UserRefreshTokens)
+                .HasForeignKey(u => u.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}

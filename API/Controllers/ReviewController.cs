@@ -1,7 +1,8 @@
-using Core.Features.Reviews.Commands.AddReview;
-using Core.Features.Reviews.Commands.EditReview;
-using Core.Features.Reviews.Commands.DeleteReview;
-using Core.Features.Reviews.Queries.GetReviewPaginatedList;
+using Application.Features.Reviews.Commands.AddReview;
+using Application.Features.Reviews.Commands.EditReview;
+using Application.Features.Reviews.Commands.DeleteReview;
+using Application.Features.Reviews.Queries.GetReviewPaginatedList;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

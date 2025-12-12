@@ -1,9 +1,10 @@
-using Core.Features.ShippingAddresses.Commands.AddShippingAddress;
-using Core.Features.ShippingAddresses.Commands.SetShippingAddress;
-using Core.Features.ShippingAddresses.Commands.EditShippingAddress;
-using Core.Features.ShippingAddresses.Commands.DeleteShippingAddress;
-using Core.Features.ShippingAddresses.Queries.GetShippingAddressList;
-using Core.Features.ShippingAddresses.Queries.GetSingleShippingAddress;
+using Application.Features.ShippingAddresses.Commands.AddShippingAddress;
+using Application.Features.ShippingAddresses.Commands.SetShippingAddress;
+using Application.Features.ShippingAddresses.Commands.EditShippingAddress;
+using Application.Features.ShippingAddresses.Commands.DeleteShippingAddress;
+using Application.Features.ShippingAddresses.Queries.GetShippingAddressList;
+using Application.Features.ShippingAddresses.Queries.GetSingleShippingAddress;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

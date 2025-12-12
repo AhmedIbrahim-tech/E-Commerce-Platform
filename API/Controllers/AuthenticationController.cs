@@ -1,11 +1,12 @@
-using Core.Features.Authentication.SignIn;
-using Core.Features.Authentication.GoogleLogin;
-using Core.Features.Authentication.RefreshToken;
-using Core.Features.Authentication.SendResetPassword;
-using Core.Features.Authentication.ResetPassword;
-using Core.Features.Authentication.AuthorizeUser;
-using Core.Features.Authentication.ConfirmEmail;
-using Core.Features.Authentication.ConfirmResetPassword;
+using Application.Features.Authentication.SignIn;
+using Application.Features.Authentication.GoogleLogin;
+using Application.Features.Authentication.RefreshToken;
+using Application.Features.Authentication.SendResetPassword;
+using Application.Features.Authentication.ResetPassword;
+using Application.Features.Authentication.AuthorizeUser;
+using Application.Features.Authentication.ConfirmEmail;
+using Application.Features.Authentication.ConfirmResetPassword;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

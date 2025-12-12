@@ -1,9 +1,15 @@
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
+public interface IPaymentRepository : IGenericRepositoryAsync<Payment>
+{
+    Task<Payment?> GetPaymentByTransactionId(string transactionId);
+    Task<Payment?> GetPaymentByOrderId(Guid orderId);
+}
+
 public class PaymentRepository : GenericRepositoryAsync<Payment>, IPaymentRepository
 {
     private readonly DbSet<Payment> _payments;
-    public PaymentRepository(ApplicationContext dbContext) : base(dbContext)
+    public PaymentRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
         _payments = dbContext.Set<Payment>();
     }

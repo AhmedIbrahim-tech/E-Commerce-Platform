@@ -1,9 +1,10 @@
-using Core.Features.Orders.Commands.AddOrder;
-using Core.Features.Orders.Commands.PlaceOrder;
-using Core.Features.Orders.Commands.DeleteOrder;
-using Core.Features.Orders.Queries.GetOrderById;
-using Core.Features.Orders.Queries.GetMyOrders;
-using Core.Features.Orders.Queries.GetOrderPaginatedList;
+using Application.Features.Orders.Commands.AddOrder;
+using Application.Features.Orders.Commands.PlaceOrder;
+using Application.Features.Orders.Commands.DeleteOrder;
+using Application.Features.Orders.Queries.GetOrderById;
+using Application.Features.Orders.Queries.GetMyOrders;
+using Application.Features.Orders.Queries.GetOrderPaginatedList;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

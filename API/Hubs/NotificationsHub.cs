@@ -1,8 +1,6 @@
+namespace API.Hubs;
 
-namespace API.Hubs
+public class NotificationsHub : Hub
 {
-    public class NotificationsHub : Hub
-    {
 
-    }
 }

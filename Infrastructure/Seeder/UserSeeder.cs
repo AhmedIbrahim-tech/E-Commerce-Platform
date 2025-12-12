@@ -1,27 +1,38 @@
+using Infrastructure.Data;
+using Infrastructure.Data.Identity;
 
 namespace Infrastructure.Seeder
 {
     public static class UserSeeder
     {
-        public static async Task SeedAsync(UserManager<User> userManager)
+        public static async Task SeedAsync(UserManager<AppUser> userManager, ApplicationDbContext dbContext)
         {
             var usersCount = await userManager.Users.CountAsync();
             if (usersCount <= 0)
             {
-                var defualtAdmin = new Admin()
+                var appUser = new AppUser
                 {
-                    FirstName = "Ahmad",
-                    LastName = "Eprahim",
                     UserName = "ahmad.eprahim",
-                    Gender = Gender.Male,
                     Email = "ebrahema89859@gmail.com",
                     PhoneNumber = "01007691743",
-                    Address = "Egypt, Mansoura, MitGhamr",
                     EmailConfirmed = true,
                     PhoneNumberConfirmed = true
                 };
-                await userManager.CreateAsync(defualtAdmin, "Ah7_med@123");
-                await userManager.AddToRoleAsync(defualtAdmin, "Admin");
+
+                await userManager.CreateAsync(appUser, "Ah7_med@123");
+                await userManager.AddToRoleAsync(appUser, "Admin");
+
+                var admin = new Admin
+                {
+                    Id = Guid.NewGuid(),
+                    AppUserId = appUser.Id,
+                    FullName = "Ahmad Eprahim",
+                    Gender = Gender.Male,
+                    Address = "Egypt, Mansoura, MitGhamr"
+                };
+
+                await dbContext.Admins.AddAsync(admin);
+                await dbContext.SaveChangesAsync();
             }
         }
     }

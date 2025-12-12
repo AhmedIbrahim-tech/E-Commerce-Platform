@@ -1,10 +1,15 @@
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
+public interface IProductRepository : IGenericRepositoryAsync<Product>
+{
+    Task<Dictionary<Guid, string?>> GetProductsByIdsAsync(List<Guid> productIds);
+}
+
 internal class ProductRepository : GenericRepositoryAsync<Product>, IProductRepository
 {
     private readonly DbSet<Product> _products;
 
-    public ProductRepository(ApplicationContext dbContext) : base(dbContext)
+    public ProductRepository(ApplicationDbContext dbContext) : base(dbContext)
     {
         _products = dbContext.Set<Product>();
     }

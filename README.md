@@ -26,7 +26,7 @@ This project follows **Clean Architecture** principles with clear separation of 
 ### **Core Layer**
 - **CQRS pattern** implementation with MediatR
 - Command and Query handlers
-- DTOs and AutoMapper profiles
+- DTOs and manual mapping
 - Advanced filtering and pagination logic
 
 ### **Domain Layer**
@@ -74,7 +74,7 @@ This architecture ensures **testability**, **maintainability**, and **independen
 ### **Validation & Mapping**
 - **FluentValidation** - Fluent validation library
 - **Data Annotations** - Attribute-based validation
-- **AutoMapper** - Object-to-object mapping
+- **Manual Mapping** - Explicit object-to-object mapping
 
 ### **Real-Time Communication**
 - **SignalR** - Real-time web notifications via WebSockets

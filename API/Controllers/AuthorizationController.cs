@@ -1,12 +1,13 @@
-using Core.Features.Authorization.Commands.AddRole;
-using Core.Features.Authorization.Commands.EditRole;
-using Core.Features.Authorization.Commands.DeleteRole;
-using Core.Features.Authorization.Commands.UpdateUserRoles;
-using Core.Features.Authorization.Commands.UpdateUserClaims;
-using Core.Features.Authorization.Queries.GetRoleById;
-using Core.Features.Authorization.Queries.GetRoleList;
-using Core.Features.Authorization.Queries.ManageUserRoles;
-using Core.Features.Authorization.Queries.ManageUserClaims;
+using Application.Features.Authorization.Commands.AddRole;
+using Application.Features.Authorization.Commands.EditRole;
+using Application.Features.Authorization.Commands.DeleteRole;
+using Application.Features.Authorization.Commands.UpdateUserRoles;
+using Application.Features.Authorization.Commands.UpdateUserClaims;
+using Application.Features.Authorization.Queries.GetRoleById;
+using Application.Features.Authorization.Queries.GetRoleList;
+using Application.Features.Authorization.Queries.ManageUserRoles;
+using Application.Features.Authorization.Queries.ManageUserClaims;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

@@ -1,16 +1,17 @@
+using Infrastructure.Data.Identity;
 
 namespace Infrastructure.Seeder
 {
     public static class RoleSeeder
     {
-        public static async Task SeedAsync(RoleManager<Role> roleManager)
+        public static async Task SeedAsync(RoleManager<AppRole> roleManager)
         {
             var rolesCount = await roleManager.Roles.CountAsync();
             if (rolesCount <= 0)
             {
-                await roleManager.CreateAsync(new Role() { Name = "Admin" });
-                await roleManager.CreateAsync(new Role() { Name = "Employee" });
-                await roleManager.CreateAsync(new Role() { Name = "Customer" });
+                await roleManager.CreateAsync(new AppRole() { Name = "Admin" });
+                await roleManager.CreateAsync(new AppRole() { Name = "Employee" });
+                await roleManager.CreateAsync(new AppRole() { Name = "Customer" });
             }
         }
     }

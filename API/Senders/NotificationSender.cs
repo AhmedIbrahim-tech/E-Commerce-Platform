@@ -1,20 +1,9 @@
-using Service.ServicesHandlers.Interfaces;
+namespace API.Senders;
 
-namespace API.Senders
+public class NotificationSender(IHubContext<NotificationsHub> hubContext) : INotificationSender
 {
-    public class NotificationSender : INotificationSender
+    public Task SendToUserAsync(string userId, string notification)
     {
-        private readonly IHubContext<NotificationsHub> _hubContext;
-
-        public NotificationSender(IHubContext<NotificationsHub> hubContext)
-        {
-            _hubContext = hubContext;
-        }
-
-        public Task SendToUserAsync(string userId, string notification)
-        {
-            return _hubContext.Clients.User(userId)
-                .SendAsync("ReceiveNotification", notification);
-        }
+        return hubContext.Clients.User(userId).SendAsync("ReceiveNotification", notification);
     }
 }

@@ -1,19 +1,10 @@
-
 namespace Domain.Entities.Identity
 {
-    public class User : IdentityUser<Guid>
+    public class User
     {
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
+        public Guid Id { get; set; }
+        public string? FullName { get; set; }
         public Gender? Gender { get; set; }
-
-        [EncryptColumn]
-        public string? Code { get; set; }
-        public ICollection<UserRefreshToken> UserRefreshTokens { get; set; }
-
-        public User()
-        {
-            UserRefreshTokens = new HashSet<UserRefreshToken>();
-        }
+        public Guid AppUserId { get; set; }
     }
 }

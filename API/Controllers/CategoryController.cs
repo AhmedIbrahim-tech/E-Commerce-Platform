@@ -1,9 +1,10 @@
-using Core.Features.Categories.Commands.AddCategory;
-using Core.Features.Categories.Commands.EditCategory;
-using Core.Features.Categories.Commands.DeleteCategory;
-using Core.Features.Categories.Queries.GetCategoryList;
-using Core.Features.Categories.Queries.GetCategoryById;
-using Core.Features.Categories.Queries.GetCategoryPaginatedList;
+using Application.Features.Categories.Commands.AddCategory;
+using Application.Features.Categories.Commands.EditCategory;
+using Application.Features.Categories.Commands.DeleteCategory;
+using Application.Features.Categories.Queries.GetCategoryList;
+using Application.Features.Categories.Queries.GetCategoryById;
+using Application.Features.Categories.Queries.GetCategoryPaginatedList;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

@@ -1,8 +1,9 @@
-using Core.Features.Employees.Commands.AddEmployee;
-using Core.Features.Employees.Commands.EditEmployee;
-using Core.Features.Employees.Commands.DeleteEmployee;
-using Core.Features.Employees.Queries.GetEmployeeById;
-using Core.Features.Employees.Queries.GetEmployeePaginatedList;
+using Application.Features.Employees.Commands.AddEmployee;
+using Application.Features.Employees.Commands.EditEmployee;
+using Application.Features.Employees.Commands.DeleteEmployee;
+using Application.Features.Employees.Queries.GetEmployeeById;
+using Application.Features.Employees.Queries.GetEmployeePaginatedList;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

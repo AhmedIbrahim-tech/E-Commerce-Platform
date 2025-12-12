@@ -1,6 +1,7 @@
-using Core.Features.Payments.Commands.SetPaymentMethod;
-using Core.Features.Payments.Commands.ServerCallback;
-using Core.Features.Payments.Queries.PaymobCallback;
+using Application.Features.Payments.Commands.SetPaymentMethod;
+using Application.Features.Payments.Commands.ServerCallback;
+using Application.Features.Payments.Queries.PaymobCallback;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

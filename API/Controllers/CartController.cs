@@ -1,9 +1,10 @@
-using Core.Features.Carts.Commands.AddToCart;
-using Core.Features.Carts.Commands.RemoveFromCart;
-using Core.Features.Carts.Commands.UpdateItemQuantity;
-using Core.Features.Carts.Commands.DeleteCart;
-using Core.Features.Carts.Queries.GetCartById;
-using Core.Features.Carts.Queries.GetMyCart;
+using Application.Features.Carts.Commands.AddToCart;
+using Application.Features.Carts.Commands.RemoveFromCart;
+using Application.Features.Carts.Commands.UpdateItemQuantity;
+using Application.Features.Carts.Commands.DeleteCart;
+using Application.Features.Carts.Queries.GetCartById;
+using Application.Features.Carts.Queries.GetMyCart;
+using API.Controllers.Base;
 
 namespace API.Controllers
 {

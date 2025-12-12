@@ -4,6 +4,8 @@ public static class ModuleInfrastructureDependencies
 {
     public static IServiceCollection AddInfrastructureDependencies(this IServiceCollection services)
     {
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+
         services.AddTransient(typeof(IGenericRepositoryAsync<>), typeof(GenericRepositoryAsync<>));
         services.AddTransient<ICategoryRepository, CategoryRepository>();
         services.AddTransient<IProductRepository, ProductRepository>();
@@ -15,6 +17,8 @@ public static class ModuleInfrastructureDependencies
         services.AddTransient<IDeliveryRepository, DeliveryRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddTransient<INotificationStore, NotificationStore>();
+
+
         return services;
     }
 }

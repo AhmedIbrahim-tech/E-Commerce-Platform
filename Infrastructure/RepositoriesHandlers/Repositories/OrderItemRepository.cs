@@ -1,5 +1,9 @@
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
-public class OrderItemRepository(ApplicationContext dbContext) : GenericRepositoryAsync<OrderItem>(dbContext), IOrderItemRepository
+public interface IOrderItemRepository : IGenericRepositoryAsync<OrderItem>
+{
+}
+
+public class OrderItemRepository(ApplicationDbContext dbContext) : GenericRepositoryAsync<OrderItem>(dbContext), IOrderItemRepository
 {
 }

@@ -1,4 +1,4 @@
-﻿Env.Load(); // Load environment variables from .env file
+Env.Load(); // Load environment variables from .env file
 
 var builder = WebApplication.CreateBuilder(args);
 

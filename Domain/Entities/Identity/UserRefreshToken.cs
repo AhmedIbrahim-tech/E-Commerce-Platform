@@ -11,7 +11,5 @@ namespace Domain.Entities.Identity
         public bool IsRevoked { get; set; }
         public DateTimeOffset AddedTime { get; set; }
         public DateTimeOffset ExpiryDate { get; set; }
-
-        public User? user { get; set; }
     }
 }

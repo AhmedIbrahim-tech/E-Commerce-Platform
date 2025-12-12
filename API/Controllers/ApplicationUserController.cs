@@ -1,5 +1,6 @@
-using Core.Features.ApplicationUser.Commands.AddCustomer;
-using Core.Features.ApplicationUser.Commands.ChangeUserPassword;
+using API.Controllers.Base;
+using Application.Features.ApplicationUser.Commands.AddCustomer;
+using Application.Features.ApplicationUser.Commands.ChangeUserPassword;
 
 namespace API.Controllers;
 

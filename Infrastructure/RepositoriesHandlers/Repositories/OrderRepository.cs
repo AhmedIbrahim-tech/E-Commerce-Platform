@@ -1,6 +1,10 @@
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
-public class OrderRepository(ApplicationContext dbContext) : GenericRepositoryAsync<Order>(dbContext), IOrderRepository
+public interface IOrderRepository : IGenericRepositoryAsync<Order>
+{
+}
+
+public class OrderRepository(ApplicationDbContext dbContext) : GenericRepositoryAsync<Order>(dbContext), IOrderRepository
 {
     #region Fields
     private readonly DbSet<Order> _orders = dbContext.Set<Order>();

@@ -1,6 +1,4 @@
-using Application.Common.Bases;
-
-namespace Application.Features.Authentication.ResetPassword;
+namespace Application.Features.Authentication.Commands.ResetPassword;
 
 public record ResetPasswordCommand
     (string Email,

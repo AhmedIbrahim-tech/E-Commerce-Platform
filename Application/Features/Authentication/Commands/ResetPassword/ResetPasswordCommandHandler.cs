@@ -1,21 +1,11 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
+namespace Application.Features.Authentication.Commands.ResetPassword;
 
-namespace Application.Features.Authentication.ResetPassword;
-
-public class ResetPasswordCommandHandler : ApiResponseHandler,
+public class ResetPasswordCommandHandler(IAuthenticationService authenticationService) : ApiResponseHandler(),
     IRequestHandler<ResetPasswordCommand, ApiResponse<string>>
 {
-    private readonly IAuthenticationService _authenticationService;
-
-    public ResetPasswordCommandHandler(IAuthenticationService authenticationService) : base()
-    {
-        _authenticationService = authenticationService;
-    }
-
     public async Task<ApiResponse<string>> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var resetPasswordResult = await _authenticationService.ResetPasswordAsync(request.Email, request.NewPassword);
+        var resetPasswordResult = await authenticationService.ResetPasswordAsync(request.Email, request.NewPassword);
         return resetPasswordResult switch
         {
             "Success" => Success(""),

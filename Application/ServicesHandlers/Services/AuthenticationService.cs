@@ -1,6 +1,3 @@
-using Application.Common.Settings;
-using Infrastructure.Data.Identity;
-
 namespace Application.ServicesHandlers.Services;
 
 public interface IAuthenticationService

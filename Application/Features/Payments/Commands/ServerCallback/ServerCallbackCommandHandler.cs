@@ -1,12 +1,4 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
 using Application.Common.Settings;
-using Infrastructure.Data;
-using Infrastructure.Data.Identity;
-using Infrastructure.RepositoriesHandlers.UnitOfWork;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using System.Text;
 using System.Text.Json;
 
 namespace Application.Features.Payments.Commands.ServerCallback;
@@ -19,14 +11,14 @@ public class ServerCallbackCommandHandler(
     ApplicationDbContext dbContext,
     UserManager<AppUser> userManager) : ApiResponseHandler(),
     IRequestHandler<ServerCallbackCommand, ApiResponse<string>>
-
+{
     public async Task<ApiResponse<string>> Handle(ServerCallbackCommand request, CancellationToken cancellationToken)
     {
         try
         {
             var payload = request.Payload;
             var receivedHmac = request.Hmac;
-            string HMAC = _paymobSettings.HMAC;
+            string HMAC = paymobSettings.HMAC;
 
             if (!payload.TryGetProperty("obj", out var obj))
                 return new ApiResponse<string>(PaymentErrors.InvalidPaymentToken());
@@ -86,7 +78,7 @@ public class ServerCallbackCommandHandler(
 
                 if (callback is null) return new ApiResponse<string>(PaymentErrors.PaymentNotFound());
                 var orderId = Guid.Parse(callback.OrderId!);
-                var order = await _unitOfWork.Orders.GetTableAsTracking()
+                var order = await unitOfWork.Orders.GetTableAsTracking()
                     .Where(c => c.Id.Equals(orderId))
                     .Include(c => c.Customer)
                     .Include(c => c.ShippingAddress)

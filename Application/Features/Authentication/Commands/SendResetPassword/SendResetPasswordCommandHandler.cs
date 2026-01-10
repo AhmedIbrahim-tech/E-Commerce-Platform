@@ -1,7 +1,4 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
-
-namespace Application.Features.Authentication.SendResetPassword;
+namespace Application.Features.Authentication.Commands.SendResetPassword;
 
 public class SendResetPasswordCommandHandler : ApiResponseHandler,
     IRequestHandler<SendResetPasswordCommand, ApiResponse<string>>

@@ -1,8 +1,7 @@
-namespace Domain.Enums.Sorting
+namespace Domain.Enums.Sorting;
+
+public enum CategorySortingEnum
 {
-    public enum CategorySortingEnum
-    {
-        NameAsc = 1,
-        NameDesc = 2
-    }
+    NameAsc = 1,
+    NameDesc = 2
 }

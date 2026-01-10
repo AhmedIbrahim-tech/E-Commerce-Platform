@@ -35,3 +35,5 @@ global using X.Paymob.CashIn.Models.Payment;
 global using Infrastructure.Data.Identity;
 global using Application.Common.Errors;
 global using Infrastructure.RepositoriesHandlers.UnitOfWork;
+global using Application.Common.Settings;
+global using Application.Common.Helpers;

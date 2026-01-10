@@ -1,4 +1,4 @@
-namespace Application.Features.Authentication.ResetPassword;
+namespace Application.Features.Authentication.Commands.ResetPassword;
 
 public class ResetPasswordValidator : AbstractValidator<ResetPasswordCommand>
 {

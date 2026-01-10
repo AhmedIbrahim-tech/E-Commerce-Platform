@@ -1,10 +1,9 @@
-namespace Domain.Enums.Sorting
+namespace Domain.Enums.Sorting;
+
+public enum ReviewSortingEnum
 {
-    public enum ReviewSortingEnum
-    {
-        CreatedDateAsc = 1,
-        CreatedDateDesc = 2,
-        RatingAsc = 3,
-        RatingDesc = 4
-    }
+    CreatedDateAsc = 1,
+    CreatedDateDesc = 2,
+    RatingAsc = 3,
+    RatingDesc = 4
 }

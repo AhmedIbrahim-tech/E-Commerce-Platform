@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251210231452_Init_Create")]
+    [Migration("20251218095109_Init_Create")]
     partial class Init_Create
     {
         /// <inheritdoc />
@@ -28,369 +28,606 @@ namespace Infrastructure.Data.Migrations
             modelBuilder.Entity("Domain.Entities.Admin", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("address");
 
                     b.Property<Guid>("AppUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("AppUserId");
+                        .HasColumnName("app_user_id");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("gender");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Admins", (string)null);
+                    b.HasIndex("AppUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_admins_app_user_id");
+
+                    b.ToTable("admins", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Cart", b =>
+                {
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<string>("PaymentIntentId")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("payment_intent_id");
+
+                    b.Property<string>("PaymentToken")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("payment_token");
+
+                    b.Property<decimal?>("TotalAmount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_amount");
+
+                    b.HasKey("CustomerId");
+
+                    b.ToTable("carts", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CartItem", b =>
+                {
+                    b.Property<Guid>("CartId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("cart_id");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("product_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIMEOFFSET()");
+
+                    b.Property<decimal?>("Price")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("price");
+
+                    b.Property<int?>("Quantity")
+                        .HasColumnType("int")
+                        .HasColumnName("quantity");
+
+                    b.Property<decimal?>("SubAmount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("sub_amount");
+
+                    b.HasKey("CartId", "ProductId");
+
+                    b.HasIndex("CartId")
+                        .HasDatabaseName("ix_cart_items_cart_id");
+
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_cart_items_product_id");
+
+                    b.ToTable("cart_items", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Category", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("description");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_categories_name");
+
+                    b.ToTable("categories", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Customer", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("AppUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("AppUserId");
+                        .HasColumnName("app_user_id");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("gender");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Customers", (string)null);
+                    b.HasIndex("AppUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customers_app_user_id");
+
+                    b.ToTable("customers", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Delivery", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<decimal?>("Cost")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("cost");
 
                     b.Property<string>("DeliveryMethod")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("delivery_method");
 
                     b.Property<DateTimeOffset?>("DeliveryTime")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("delivery_time");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("description");
 
-                    b.Property<int?>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("status");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Deliveries");
+                    b.HasIndex("DeliveryMethod")
+                        .HasDatabaseName("ix_deliveries_delivery_method");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_deliveries_status");
+
+                    b.ToTable("deliveries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Employee", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("nvarchar(250)");
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("address");
 
                     b.Property<Guid>("AppUserId")
                         .HasColumnType("uniqueidentifier")
-                        .HasColumnName("AppUserId");
+                        .HasColumnName("app_user_id");
 
-                    b.Property<DateTimeOffset>("HireDate")
+                    b.Property<string>("FullName")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("gender");
+
+                    b.Property<DateTimeOffset?>("HireDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
+                        .HasColumnName("hire_date")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<string>("Position")
-                        .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("position");
 
-                    b.Property<decimal>("Salary")
-                        .HasColumnType("decimal(18,2)");
+                    b.Property<decimal?>("Salary")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("salary");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Employees", (string)null);
+                    b.HasIndex("AppUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_employees_app_user_id");
+
+                    b.HasIndex("Position")
+                        .HasDatabaseName("ix_employees_position");
+
+                    b.ToTable("employees", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Identity.UserRefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<DateTimeOffset>("AddedTime")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
+                        .HasColumnName("added_time")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<DateTimeOffset>("ExpiryDate")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("expiry_date");
 
                     b.Property<bool>("IsRevoked")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_revoked");
 
                     b.Property<bool>("IsUsed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
-                        .HasDefaultValue(false);
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_used");
 
                     b.Property<string>("JwtId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("jwt_id");
 
                     b.Property<string>("RefreshToken")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("refresh_token");
 
                     b.Property<string>("Token")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("token");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("user_id");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ExpiryDate")
+                        .HasDatabaseName("ix_user_refresh_tokens_expiry_date");
 
-                    b.ToTable("UserRefreshTokens");
+                    b.HasIndex("JwtId")
+                        .HasDatabaseName("ix_user_refresh_tokens_jwt_id");
+
+                    b.HasIndex("RefreshToken")
+                        .HasDatabaseName("ix_user_refresh_tokens_refresh_token");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_refresh_tokens_user_id");
+
+                    b.ToTable("user_refresh_tokens", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Order", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("customer_id");
 
                     b.Property<Guid?>("DeliveryId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("delivery_id");
 
                     b.Property<DateTimeOffset>("OrderDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
+                        .HasColumnName("order_date")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<Guid?>("PaymentId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("payment_id");
 
                     b.Property<Guid?>("ShippingAddressId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("shipping_address_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("status");
 
                     b.Property<decimal>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_amount");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_orders_customer_id");
 
                     b.HasIndex("DeliveryId")
                         .IsUnique()
-                        .HasFilter("[DeliveryId] IS NOT NULL");
+                        .HasDatabaseName("ix_orders_delivery_id")
+                        .HasFilter("[delivery_id] IS NOT NULL");
+
+                    b.HasIndex("OrderDate")
+                        .HasDatabaseName("ix_orders_order_date");
 
                     b.HasIndex("PaymentId")
                         .IsUnique()
-                        .HasFilter("[PaymentId] IS NOT NULL");
+                        .HasDatabaseName("ix_orders_payment_id")
+                        .HasFilter("[payment_id] IS NOT NULL");
 
                     b.HasIndex("ShippingAddressId")
                         .IsUnique()
-                        .HasFilter("[ShippingAddressId] IS NOT NULL");
+                        .HasFilter("[shipping_address_id] IS NOT NULL");
 
-                    b.ToTable("Orders");
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_orders_status");
+
+                    b.ToTable("orders", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.OrderItem", b =>
                 {
                     b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("product_id");
 
                     b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("order_id");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("quantity");
 
                     b.Property<decimal?>("SubAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("sub_amount");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("unit_price");
 
                     b.HasKey("ProductId", "OrderId");
 
-                    b.HasIndex("OrderId");
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("ix_order_items_order_id");
 
-                    b.ToTable("OrderItems");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_order_items_product_id");
+
+                    b.ToTable("order_items", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Payment", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("OrderId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("order_id");
 
                     b.Property<DateTimeOffset?>("PaymentDate")
-                        .HasColumnType("datetimeoffset");
+                        .HasColumnType("datetimeoffset")
+                        .HasColumnName("payment_date");
 
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("payment_method");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("status");
 
                     b.Property<decimal?>("TotalAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("total_amount");
 
                     b.Property<string>("TransactionId")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("transaction_id");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Payments");
+                    b.HasIndex("OrderId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_order_id");
+
+                    b.HasIndex("PaymentMethod")
+                        .HasDatabaseName("ix_payments_payment_method");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_payments_status");
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_transaction_id")
+                        .HasFilter("[transaction_id] IS NOT NULL");
+
+                    b.ToTable("payments", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<Guid>("CategoryId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("category_id");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
                     b.Property<string>("Description")
                         .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("description");
 
                     b.Property<string>("ImageURL")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("image_url");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("price");
 
                     b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("stock_quantity");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CategoryId");
+                    b.HasIndex("CategoryId")
+                        .HasDatabaseName("ix_products_category_id");
 
-                    b.ToTable("Products");
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_products_created_at");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_products_name");
+
+                    b.ToTable("products", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Review", b =>
                 {
                     b.Property<Guid>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("customer_id");
 
                     b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("product_id");
 
                     b.Property<string>("Comment")
                         .HasMaxLength(400)
-                        .HasColumnType("nvarchar(400)");
+                        .HasColumnType("nvarchar(400)")
+                        .HasColumnName("comment");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetimeoffset")
+                        .HasColumnName("created_at")
                         .HasDefaultValueSql("SYSDATETIMEOFFSET()");
 
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
+                    b.Property<string>("Rating")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("rating");
 
                     b.HasKey("CustomerId", "ProductId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_reviews_customer_id");
 
-                    b.ToTable("Reviews");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("ix_reviews_product_id");
+
+                    b.HasIndex("Rating")
+                        .HasDatabaseName("ix_reviews_rating");
+
+                    b.ToTable("reviews", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ShippingAddress", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("id");
 
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("city");
 
                     b.Property<Guid>("CustomerId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("customer_id");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("first_name");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("last_name");
 
                     b.Property<string>("State")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("state");
 
                     b.Property<string>("Street")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("nvarchar(150)");
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("street");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_shipping_addresses_customer_id");
 
-                    b.ToTable("ShippingAddresses");
+                    b.ToTable("shipping_addresses", (string)null);
                 });
 
             modelBuilder.Entity("Infrastructure.Data.Identity.AppRole", b =>
@@ -596,90 +833,18 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.Admin", b =>
+            modelBuilder.Entity("Domain.Entities.CartItem", b =>
                 {
-                    b.OwnsOne("Domain.Entities.Identity.UserProfile", "Profile", b1 =>
-                        {
-                            b1.Property<Guid>("AdminId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("FullName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("nvarchar(200)")
-                                .HasColumnName("FullName");
-
-                            b1.Property<string>("Gender")
-                                .HasColumnType("nvarchar(max)")
-                                .HasColumnName("Gender");
-
-                            b1.HasKey("AdminId");
-
-                            b1.ToTable("Admins");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AdminId");
-                        });
-
-                    b.Navigation("Profile")
+                    b.HasOne("Domain.Entities.Cart", null)
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
 
-            modelBuilder.Entity("Domain.Entities.Customer", b =>
-                {
-                    b.OwnsOne("Domain.Entities.Identity.UserProfile", "Profile", b1 =>
-                        {
-                            b1.Property<Guid>("CustomerId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("FullName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("nvarchar(200)")
-                                .HasColumnName("FullName");
-
-                            b1.Property<string>("Gender")
-                                .HasColumnType("nvarchar(max)")
-                                .HasColumnName("Gender");
-
-                            b1.HasKey("CustomerId");
-
-                            b1.ToTable("Customers");
-
-                            b1.WithOwner()
-                                .HasForeignKey("CustomerId");
-                        });
-
-                    b.Navigation("Profile")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Domain.Entities.Employee", b =>
-                {
-                    b.OwnsOne("Domain.Entities.Identity.UserProfile", "Profile", b1 =>
-                        {
-                            b1.Property<Guid>("EmployeeId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<string>("FullName")
-                                .IsRequired()
-                                .HasMaxLength(200)
-                                .HasColumnType("nvarchar(200)")
-                                .HasColumnName("FullName");
-
-                            b1.Property<string>("Gender")
-                                .HasColumnType("nvarchar(max)")
-                                .HasColumnName("Gender");
-
-                            b1.HasKey("EmployeeId");
-
-                            b1.ToTable("Employees");
-
-                            b1.WithOwner()
-                                .HasForeignKey("EmployeeId");
-                        });
-
-                    b.Navigation("Profile")
+                    b.HasOne("Domain.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -697,7 +862,7 @@ namespace Infrastructure.Data.Migrations
                     b.HasOne("Domain.Entities.Customer", "Customer")
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.Delivery", "Delivery")
@@ -712,7 +877,8 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasOne("Domain.Entities.ShippingAddress", "ShippingAddress")
                         .WithOne()
-                        .HasForeignKey("Domain.Entities.Order", "ShippingAddressId");
+                        .HasForeignKey("Domain.Entities.Order", "ShippingAddressId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Customer");
 
@@ -734,7 +900,7 @@ namespace Infrastructure.Data.Migrations
                     b.HasOne("Domain.Entities.Product", "Product")
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -832,6 +998,11 @@ namespace Infrastructure.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Cart", b =>
+                {
+                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("Domain.Entities.Category", b =>

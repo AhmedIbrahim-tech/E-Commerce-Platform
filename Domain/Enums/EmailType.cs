@@ -1,9 +1,8 @@
-namespace Domain.Enums
+namespace Domain.Enums;
+
+public enum EmailType
 {
-    public enum EmailType
-    {
-        ConfirmEmail,
-        ResetPassword,
-        OrderConfirmation,
-    }
+    ConfirmEmail,
+    ResetPassword,
+    OrderConfirmation,
 }

@@ -1,8 +1,6 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
-using Infrastructure.Data.Identity;
+using Application.Common.Helpers;
 
-namespace Application.Features.Authentication.SignIn;
+namespace Application.Features.Authentication.Commands.SignIn;
 
 public class SignInCommandHandler(
     UserManager<AppUser> userManager,
@@ -12,7 +10,7 @@ public class SignInCommandHandler(
 {
     public async Task<ApiResponse<JwtAuthResponse>> Handle(SignInCommand request, CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByNameAsync(request.UserName);
+        var user = await userManager.FindByEmailAsync(request.UserName);
         if (user is null) return new ApiResponse<JwtAuthResponse>(UserErrors.InvalidCredentials());
 
         var signInResult = await signInManager.CheckPasswordSignInAsync(user, request.Password, false);

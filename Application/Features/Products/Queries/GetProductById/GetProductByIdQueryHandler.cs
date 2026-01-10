@@ -1,7 +1,3 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
-using Infrastructure.RepositoriesHandlers.UnitOfWork;
-
 namespace Application.Features.Products.Queries.GetProductById;
 
 public class GetProductByIdQueryHandler(IUnitOfWork unitOfWork) : ApiResponseHandler(),
@@ -34,7 +30,7 @@ public class GetProductByIdQueryHandler(IUnitOfWork unitOfWork) : ApiResponseHan
             review.Comment
         );
 
-        var queryable = unitOfWork.Reviews.GetTableNoTracking()
+        IQueryable<Review> queryable = unitOfWork.Reviews.GetTableNoTracking()
             .Where(r => r.ProductId == request.ProductId)
             .Include(r => r.Customer)
             .Include(r => r.Product);

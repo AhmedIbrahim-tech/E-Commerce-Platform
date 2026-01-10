@@ -25,7 +25,7 @@ public class GetReviewPaginatedListQueryHandler(
             c.CreatedAt
         );
 
-        var queryable = unitOfWork.Reviews.GetTableNoTracking()
+        IQueryable<Review> queryable = unitOfWork.Reviews.GetTableNoTracking()
             .Where(r => r.ProductId == request.ProductId)
             .Include(r => r.Customer)
             .Include(r => r.Product);

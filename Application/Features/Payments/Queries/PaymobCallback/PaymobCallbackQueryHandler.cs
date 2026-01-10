@@ -1,13 +1,8 @@
-using Application.Common.Bases;
-using Application.Common.Settings;
-using System.Security.Cryptography;
-using System.Text;
-
 namespace Application.Features.Payments.Queries.PaymobCallback;
 
 public class PaymobCallbackQueryHandler(PaymobSettings paymobSettings) : ApiResponseHandler(),
     IRequestHandler<PaymobCallbackQuery, PaymobCallbackResponse>
-
+{
     public Task<PaymobCallbackResponse> Handle(PaymobCallbackQuery request, CancellationToken cancellationToken)
     {
         string[] fields = new[]

@@ -1,4 +1,4 @@
-namespace Application.Features.Authentication.GoogleLogin;
+namespace Application.Features.Authentication.Commands.GoogleLogin;
 
 internal class GoogleLoginValidator : AbstractValidator<GoogleLoginCommand>
 {

@@ -1,7 +1,3 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
-using Infrastructure.Data;
-using Infrastructure.Data.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.ApplicationUser.Commands.AddCustomer;

@@ -1,4 +1,4 @@
-namespace Application.Features.Authentication.SendResetPassword;
+namespace Application.Features.Authentication.Commands.SendResetPassword;
 
 public class SendResetPasswordValidator : AbstractValidator<SendResetPasswordCommand>
 {

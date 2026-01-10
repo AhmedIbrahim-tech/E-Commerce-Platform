@@ -1,7 +1,6 @@
-using Application.Common.Bases;
-using Application.Common.Errors;
+using Application.Common.Helpers;
 
-namespace Application.Features.Authentication.GoogleLogin;
+namespace Application.Features.Authentication.Commands.GoogleLogin;
 
 public class GoogleLoginCommandHandler : ApiResponseHandler,
     IRequestHandler<GoogleLoginCommand, ApiResponse<JwtAuthResponse>>

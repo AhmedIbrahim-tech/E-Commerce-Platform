@@ -1,4 +1,4 @@
-namespace Application.Features.Authentication.SignIn;
+namespace Application.Features.Authentication.Commands.SignIn;
 
 public class SignInValidator : AbstractValidator<SignInCommand>
 {

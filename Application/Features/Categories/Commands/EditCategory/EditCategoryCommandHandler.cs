@@ -11,7 +11,7 @@ public class EditCategoryCommandHandler(IUnitOfWork unitOfWork) : ApiResponseHan
     {
         var category = await unitOfWork.Categories.GetTableNoTracking()
             .Where(c => c.Id.Equals(request.Id))
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (category == null) return new ApiResponse<string>(CategoryErrors.CategoryNotFound());
 
@@ -20,8 +20,8 @@ public class EditCategoryCommandHandler(IUnitOfWork unitOfWork) : ApiResponseHan
 
         try
         {
-            await unitOfWork.Categories.UpdateAsync(category);
-            await unitOfWork.SaveChangesAsync();
+            await unitOfWork.Categories.UpdateAsync(category, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
             return Edit("");
         }
         catch (Exception)

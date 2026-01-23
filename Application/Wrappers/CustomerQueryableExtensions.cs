@@ -1,3 +1,5 @@
+using Domain.Entities.Users;
+
 namespace Application.Wrappers;
 
 public static class CustomerQueryableExtensions

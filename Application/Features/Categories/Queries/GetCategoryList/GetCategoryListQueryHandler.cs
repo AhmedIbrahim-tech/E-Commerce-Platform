@@ -8,12 +8,12 @@ public class GetCategoryListQueryHandler(IUnitOfWork unitOfWork) : ApiResponseHa
 {
     public async Task<ApiResponse<List<GetCategoryListResponse>>> Handle(GetCategoryListQuery request, CancellationToken cancellationToken)
     {
-        var categoryList = await unitOfWork.Categories.GetAllAsync();
+        var categoryList = await unitOfWork.Categories.GetAllAsync(cancellationToken);
         var categoryListResponse = categoryList
             .Where(c => c != null)
             .Select(category => new GetCategoryListResponse(
                 category!.Id,
-                category.Name!,
+                category.Name,
                 category.Description
             ))
             .ToList();

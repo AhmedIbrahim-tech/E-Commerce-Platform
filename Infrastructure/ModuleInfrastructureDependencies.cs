@@ -16,7 +16,7 @@ public static class ModuleInfrastructureDependencies
         services.AddTransient<IPaymentRepository, PaymentRepository>();
         services.AddTransient<IDeliveryRepository, DeliveryRepository>();
         services.AddTransient<IRefreshTokenRepository, RefreshTokenRepository>();
-        services.AddTransient<INotificationStore, NotificationStore>();
+        services.AddTransient<INotificationRepository, NotificationRepository>();
 
 
         return services;

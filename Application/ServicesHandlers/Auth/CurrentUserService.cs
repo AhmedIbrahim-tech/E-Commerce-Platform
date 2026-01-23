@@ -10,6 +10,7 @@ public interface ICurrentUserService
     Task<User> GetUserAsync();
     Task<List<string>> GetCurrentUserRolesAsync();
     bool DeleteGuestIdCookie();
+    string GetBaseUrl();
 }
 
 public class CurrentUserService : ICurrentUserService
@@ -69,7 +70,7 @@ public class CurrentUserService : ICurrentUserService
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) throw new UnauthorizedAccessException();
         
-        // Get domain entity (try Customer, Employee, Admin)
+        // Get domain entity (try Customer, Vendor, Admin)
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.AppUserId == appUser.Id);
         if (customer != null)
         {
@@ -82,15 +83,15 @@ public class CurrentUserService : ICurrentUserService
             };
         }
         
-        var employee = await _dbContext.Employees.FirstOrDefaultAsync(e => e.AppUserId == appUser.Id);
-        if (employee != null)
+        var vendor = await _dbContext.Vendors.FirstOrDefaultAsync(v => v.AppUserId == appUser.Id);
+        if (vendor != null)
         {
             return new User
             {
-                Id = employee.Id,
-                AppUserId = employee.AppUserId,
-                FullName = employee.FullName,
-                Gender = employee.Gender
+                Id = vendor.Id,
+                AppUserId = vendor.AppUserId,
+                FullName = vendor.FullName,
+                Gender = vendor.Gender
             };
         }
         
@@ -111,7 +112,7 @@ public class CurrentUserService : ICurrentUserService
         {
             Id = appUser.Id,
             AppUserId = appUser.Id,
-            FullName = appUser.FullName,
+            FullName = appUser.DisplayName,
             Gender = null
         };
     }
@@ -144,6 +145,16 @@ public class CurrentUserService : ICurrentUserService
         {
             return false;
         }
+    }
+
+    public string GetBaseUrl()
+    {
+        var request = _httpContextAccessor.HttpContext?.Request;
+        if (request == null)
+            return string.Empty;
+
+        string schema = request.Scheme.EndsWith("s") ? request.Scheme.Replace("http:", "https:") : request.Scheme;
+        return $"{schema}://{request.Host}/";
     }
     #endregion
 }

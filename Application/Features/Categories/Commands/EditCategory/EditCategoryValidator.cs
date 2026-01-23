@@ -32,7 +32,7 @@ public class EditCategoryValidator : AbstractValidator<EditCategoryCommand>
     {
         RuleFor(c => c.Name)
             .MustAsync(async (model, name, cancellation) => !await _unitOfWork.Categories.GetTableNoTracking()
-                .Where(c => c.Name!.Equals(name) && !c.Id.Equals(model.Id))
+                .Where(c => c.Name.Equals(name) && !c.Id.Equals(model.Id))
                 .AnyAsync(cancellation))
             .WithMessage("Already exists");
     }

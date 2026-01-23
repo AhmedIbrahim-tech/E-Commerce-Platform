@@ -51,6 +51,11 @@ public class ApiResponseHandler
         return new ApiResponse<T>(new ApiResponse(HttpStatusCode.Unauthorized, message ?? "Unauthorized", false));
     }
 
+    public ApiResponse<T> Forbidden<T>(string? message = null)
+    {
+        return new ApiResponse<T>(new ApiResponse(HttpStatusCode.Forbidden, message ?? "Forbidden", false));
+    }
+
     public ApiResponse<T> BadRequest<T>(string? message = null)
     {
         return new ApiResponse<T>(new ApiResponse(HttpStatusCode.BadRequest, message ?? "BadRequest", false));

@@ -1,5 +1,6 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
+using Domain.Entities.Cart;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text.Json;
@@ -30,24 +31,24 @@ public class GetMyCartQueryHandler(
         var productIds = cart.CartItems?.Select(i => i.ProductId).ToList() ?? new List<Guid>();
 
         // 3. Query DB to get product names
-        var products = await unitOfWork.Products.GetProductsByIdsAsync(productIds);
+        var products = await unitOfWork.Products.GetProductsByIdsAsync(productIds, cancellationToken);
 
         // 4. Map response using Select()
         var cartResponse = new GetMyCartResponse
         {
-            CreatedAt = cart.CreatedAt,
+            CreatedTime = cart.CreatedTime,
             CustomerId = cart.CustomerId,
             CartItems = cart.CartItems?.Select(item => new CartItemResponse
             {
                 ProductId = item.ProductId,
                 ProductName = products.TryGetValue(item.ProductId, out var name) ? name : null,
                 Quantity = item.Quantity,
-                CreatedAt = item.CreatedAt
+                CreatedTime = item.CreatedTime
             }).ToList()
         };
 
         // 5. Return response
-        var resultCart = cartResponse ?? new GetMyCartResponse { CustomerId = currentUserService.GetUserId(), CreatedAt = DateTimeOffset.UtcNow };
+        var resultCart = cartResponse ?? new GetMyCartResponse { CustomerId = currentUserService.GetUserId(), CreatedTime = DateTimeOffset.UtcNow };
         return Success(resultCart);
     }
 }

@@ -1,3 +1,5 @@
+using Domain.Entities.Shipping;
+
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
 public interface IShippingAddressRepository : IGenericRepositoryAsync<ShippingAddress>

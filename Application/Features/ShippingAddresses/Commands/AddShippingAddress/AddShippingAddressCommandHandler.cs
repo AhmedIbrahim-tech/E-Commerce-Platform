@@ -20,7 +20,7 @@ public class AddShippingAddressCommandHandler(
                 CustomerId = currentUserId
             };
 
-            await unitOfWork.ShippingAddresses.AddAsync(shippingAddress);
+            await unitOfWork.ShippingAddresses.AddAsync(shippingAddress, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Created("");
         }

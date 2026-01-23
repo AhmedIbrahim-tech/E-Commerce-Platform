@@ -1,12 +1,13 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
 using Application.Common.Settings;
-using Infrastructure;
+using Domain.Entities.AuditLogs;
 using Infrastructure.Data;
 using Infrastructure.Data.Identity;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Text.Json;
 
 namespace Application.Features.Orders.Commands.PlaceOrder;
 
@@ -14,8 +15,7 @@ public class PlaceOrderCommandHandler(
     IUnitOfWork unitOfWork,
     IPaymobCashInBroker broker,
     IMemoryCache memoryCache,
-    INotificationStore notificationStore,
-    INotificationSender notificationSender,
+    INotificationService notificationService,
     ICurrentUserService currentUserService,
     PaymobSettings paymobSettings,
     ApplicationDbContext dbContext,
@@ -51,7 +51,7 @@ public class PlaceOrderCommandHandler(
                     if (product != null)
                     {
                         product.StockQuantity -= item.Quantity;
-                        await unitOfWork.Products.UpdateAsync(product);
+                        await unitOfWork.Products.UpdateAsync(product, cancellationToken);
                         await unitOfWork.SaveChangesAsync(cancellationToken);
                     }
                     else
@@ -85,8 +85,23 @@ public class PlaceOrderCommandHandler(
                 if (order.Payment != null)
                     order.Payment.Status = Status.Pending;
 
-                await unitOfWork.Orders.UpdateAsync(order);
+                await unitOfWork.Orders.UpdateAsync(order, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
+
+                unitOfWork.Context.AuditLogs.Add(new AuditLog(
+                    eventType: "Orders",
+                    eventName: "OrderPlaced",
+                    description: $"Order {order.Id} placed",
+                    userId: order.CustomerId,
+                    userEmail: null,
+                    additionalData: JsonSerializer.Serialize(new
+                    {
+                        entityType = "order",
+                        entityId = order.Id,
+                        status = order.Status.ToString()
+                    })));
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
                 return Success(new PaymentProcessResponse(order.Id, "Success", order.PaymentToken ?? ""));
             }
@@ -111,12 +126,12 @@ public class PlaceOrderCommandHandler(
                     return new ApiResponse<PaymentProcessResponse>(CustomerErrors.CustomerNotFound());
                 }
 
-                var amountCents = (int)(order.TotalAmount * 100 ?? 0);
+                var amountCents = (int)(order.TotalAmount * 100);
 
                 var orderRequest = CashInCreateOrderRequest.CreateOrder(amountCents);
                 var orderResponse = await broker.CreateOrderAsync(orderRequest);
 
-                var fullName = customer.FullName ?? appUser.FullName ?? "Guest User";
+                var fullName = customer.FullName ?? appUser.DisplayName ?? "Guest User";
                 var nameParts = fullName.Split(' ', 2);
                 string firstName = nameParts.Length > 0 ? nameParts[0] : "Guest";
                 string lastName = nameParts.Length > 1 ? nameParts[1] : "User";
@@ -165,13 +180,13 @@ public class PlaceOrderCommandHandler(
                     Status = Status.Pending
                 };
 
-                await unitOfWork.Payments.AddAsync(payment);
+                await unitOfWork.Payments.AddAsync(payment, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 order.Status = Status.Completed;
                 order.PaymentToken = paymentKeyResponse.PaymentKey;
 
-                await unitOfWork.Orders.UpdateAsync(order);
+                await unitOfWork.Orders.UpdateAsync(order, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 string iframeUrl = GetPaymentIframeUrl(paymentKeyResponse.PaymentKey);
@@ -181,11 +196,26 @@ public class PlaceOrderCommandHandler(
                     return new ApiResponse<PaymentProcessResponse>(PaymentErrors.PaymentProviderError());
                 }
 
-                var currentUserId = currentUserService.GetUserId().ToString();
-                var notification = NotificationFactory.OrderPlaced(currentUserId, order.Id.ToString());
-                var result = await notificationStore.AddNotification(notification);
-                if (result == "Success")
-                    await notificationSender.SendToUserAsync(notification.ReceiverId!, notification.Message!);
+                await notificationService.CreateAsync(
+                    "order_placed",
+                    new { orderId = order.Id },
+                    new NotificationRecipients(CustomerIds: new[] { currentUserService.GetUserId() }),
+                    cancellationToken);
+
+                unitOfWork.Context.AuditLogs.Add(new AuditLog(
+                    eventType: "Orders",
+                    eventName: "OrderPlaced",
+                    description: $"Order {order.Id} placed",
+                    userId: order.CustomerId,
+                    userEmail: appUser.Email,
+                    additionalData: JsonSerializer.Serialize(new
+                    {
+                        entityType = "order",
+                        entityId = order.Id,
+                        status = order.Status.ToString()
+                    })));
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
                 return Success(new PaymentProcessResponse(order.Id, iframeUrl, order.PaymentToken!));
             }

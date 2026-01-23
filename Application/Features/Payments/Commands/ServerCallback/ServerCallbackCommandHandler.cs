@@ -1,4 +1,3 @@
-using Application.Common.Settings;
 using System.Text.Json;
 
 namespace Application.Features.Payments.Commands.ServerCallback;
@@ -129,14 +128,14 @@ public class ServerCallbackCommandHandler(
             {
                 payment = new Payment
                 {
-                    Id = orderId,
+                    OrderId = orderId,
                     TransactionId = callback.Id.ToString(),
                     TotalAmount = callback.AmountCents / 100.0m,
                     PaymentDate = DateTime.Now,
                     PaymentMethod = PaymentMethod.Paymob,
                     Status = Status.Pending,
                 };
-                await unitOfWork.Payments.AddAsync(payment);
+                await unitOfWork.Payments.AddAsync(payment, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
             }
         }
@@ -174,8 +173,8 @@ public class ServerCallbackCommandHandler(
             payment.Status = paymentStatus;
             payment.PaymentDate = DateTimeOffset.UtcNow.ToLocalTime();
 
-            await unitOfWork.Orders.UpdateAsync(order);
-            await unitOfWork.Payments.UpdateAsync(payment);
+            await unitOfWork.Orders.UpdateAsync(order, cancellationToken);
+            await unitOfWork.Payments.UpdateAsync(payment, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
             if (orderStatus == Status.Completed)
@@ -197,12 +196,14 @@ public class ServerCallbackCommandHandler(
                     var appUserForEmail = await userManager.FindByIdAsync(customerForEmail.AppUserId.ToString());
                     if (appUserForEmail != null)
                     {
-                        var result3 = await emailService.SendEmailAsync(appUserForEmail.Email!, null!, EmailType.OrderConfirmation, order);
-                        if (result3 != "Success")
+                        var orderConfirmationBody = BuildOrderConfirmationEmailBody(order);
+                        var emailDto = new EmailDto
                         {
-                            await unitOfWork.RollbackTransactionAsync(cancellationToken);
-                            return "FailedToSendOrderConfirmationEmail";
-                        }
+                            MailTo = appUserForEmail.Email!,
+                            Subject = "Order Placed Confirmation",
+                            Body = orderConfirmationBody
+                        };
+                        await emailService.SendEmailsAsync(emailDto, cancellationToken);
                     }
                 }
             }
@@ -215,6 +216,78 @@ public class ServerCallbackCommandHandler(
             await unitOfWork.RollbackTransactionAsync(cancellationToken);
             return "FailedToUpdateOrder";
         }
+    }
+
+    private static string BuildOrderConfirmationEmailBody(Order order)
+    {
+        var paymentStatus = order.Payment?.Status.ToString() ?? "Unknown";
+        var statusColor = GetPaymentStatusColor(paymentStatus);
+        var customerName = order.Customer?.FullName ?? "Customer";
+        var orderDate = order.OrderDate.ToString("MMMM dd, yyyy");
+        var deliveryTime = order.Delivery?.DeliveryTime?.ToString("MMMM dd, yyyy") ?? "N/A";
+        var deliveryMethod = order.Delivery?.DeliveryMethod.ToString() ?? "N/A";
+        var orderCost = order.TotalAmount;
+        var deliveryCost = order.Delivery?.Cost ?? 0;
+        var totalAmount = orderCost + deliveryCost;
+
+        return $@"
+            <html>
+                <body style='font-family: Arial, sans-serif; color: #333;'>
+                    <h2>Order Placed Successfully!</h2>
+                    <p>Dear {customerName},</p>
+                    <p>Your order #{order.Id} has been successfully placed. We're now preparing your items for delivery or pickup.</p>
+                    <table style='border-collapse: collapse; width: 100%; max-width: 600px;'>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Order ID:</td>
+                            <td style='padding: 8px;'>{order.Id}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Order Date:</td>
+                            <td style='padding: 8px;'>{orderDate}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Payment Status:</td>
+                            <td style='padding: 8px; color: {statusColor};'>{paymentStatus}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Delivery Method:</td>
+                            <td style='padding: 8px;'>{deliveryMethod}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Estimated Delivery Date:</td>
+                            <td style='padding: 8px;'>{deliveryTime}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Order Cost:</td>
+                            <td style='padding: 8px;'>{orderCost:F2}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Delivery Cost:</td>
+                            <td style='padding: 8px;'>{deliveryCost:F2}</td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 8px; font-weight: bold;'>Total Amount:</td>
+                            <td style='padding: 8px;'>{totalAmount:F2}</td>
+                        </tr>
+                    </table>
+                    <p>You'll receive another notification when your order ships or is ready for pickup. If you have any questions, feel free to contact our support team.</p>
+                    <p>Thank you for shopping with us!</p>
+                    <p>Best regards,<br/>The Tajerly Team</p>
+                </body>
+            </html>";
+    }
+
+    private static string GetPaymentStatusColor(string paymentStatus)
+    {
+        return paymentStatus switch
+        {
+            "Completed" => "green",
+            "Received" => "green",
+            "Failed" => "red",
+            "Pending" => "orange",
+            "Refunded" => "blue",
+            _ => "gray"
+        };
     }
 }
 

@@ -1,5 +1,3 @@
-using Application.Common.Bases;
-
 namespace Application.Features.Customers.Commands.EditCustomer;
 
 public record EditCustomerCommand : IRequest<ApiResponse<string>>
@@ -11,5 +9,6 @@ public record EditCustomerCommand : IRequest<ApiResponse<string>>
     public string? Email { get; init; }
     public Gender? Gender { get; init; }
     public string? PhoneNumber { get; init; }
+    public string? SecondPhoneNumber { get; init; }
 }
 

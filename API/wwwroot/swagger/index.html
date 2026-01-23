@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Tajerly API Docs</title>
+    <link rel="stylesheet" href="./swagger-ui.css" />
+</head>
+
+<body>
+    <div id="swagger-ui"></div>
+
+    <script src="./swagger-ui-bundle.js"></script>
+    <script src="./swagger-ui-standalone-preset.js"></script>
+
+    <script>
+    window.onload = () => {
+      const ui = SwaggerUIBundle({
+        url: "/swagger/v1/swagger.json",
+        dom_id: "#swagger-ui",
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        layout: "StandaloneLayout",
+
+        docExpansion: "none",
+        deepLinking: false,
+        defaultModelsExpandDepth: -1
+      });
+
+      window.ui = ui;
+
+      const collapseAll = () => {
+        document
+          .querySelectorAll(".opblock-tag-section.is-open")
+          .forEach(section => {
+            section.classList.remove("is-open");
+          });
+      };
+
+      const observer = new MutationObserver(collapseAll);
+
+      setTimeout(() => {
+        collapseAll();
+        observer.observe(document.getElementById("swagger-ui"), {
+          childList: true,
+          subtree: true
+        });
+      }, 100);
+    };
+    </script>
+</body>
+</html>

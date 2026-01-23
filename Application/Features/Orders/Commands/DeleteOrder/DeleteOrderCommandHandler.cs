@@ -21,7 +21,7 @@ public class DeleteOrderCommandHandler(IUnitOfWork unitOfWork) : ApiResponseHand
 
         try
         {
-            await unitOfWork.Orders.DeleteAsync(order);
+            await unitOfWork.Orders.DeleteAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Deleted<string>();
         }

@@ -14,7 +14,7 @@ public class DeleteShippingAddressCommandHandler(IUnitOfWork unitOfWork) : ApiRe
 
         try
         {
-            await unitOfWork.ShippingAddresses.DeleteAsync(shippingAddress);
+            await unitOfWork.ShippingAddresses.DeleteAsync(shippingAddress, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Deleted<string>();
         }

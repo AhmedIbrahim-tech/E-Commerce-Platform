@@ -24,7 +24,13 @@ public static class ModuleApplicationDependencies
         services.AddTransient<IAuthenticationService, AuthenticationService>();
         services.AddTransient<IAuthGoogleService, AuthGoogleService>();
         services.AddTransient<ICurrentUserService, CurrentUserService>();
-        services.AddTransient<IFileService, FileService>();
+        services.AddTransient<IFileUploadService, FileUploadService>();
+        services.AddTransient<IFileService, FileService>(); // Legacy - consider removing after migration
+        services.AddTransient<IDefaultClaimsService, DefaultClaimsService>();
+        services.AddTransient<IUserCreationService, UserCreationService>();
+        services.AddTransient<IAuditService, AuditService>();
+        services.AddTransient<ILookUpsService, LookUpsService>();
+        services.AddTransient<INotificationService, NotificationService>();
 
         services.AddPaymobCashIn(options =>
         {

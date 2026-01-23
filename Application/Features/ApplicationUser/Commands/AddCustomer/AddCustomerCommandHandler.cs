@@ -1,3 +1,4 @@
+using Application.ServicesHandlers.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.ApplicationUser.Commands.AddCustomer;
@@ -6,18 +7,35 @@ internal class AddCustomerCommandHandler(
     UserManager<AppUser> userManager,
     IHttpContextAccessor httpContextAccessor,
     ApplicationDbContext dbContext,
-    IUrlHelper urlHelper) : ApiResponseHandler(),
+    IUrlHelper urlHelper,
+    IDefaultClaimsService defaultClaimsService,
+    INotificationService notificationService,
+    IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<AddCustomerCommand, ApiResponse<string>>
 {
     public async Task<ApiResponse<string>> Handle(AddCustomerCommand request, CancellationToken cancellationToken)
     {
-        var appUser = new AppUser
+        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        var appUser = new AppUser(request.UserName, fullName)
         {
-            UserName = request.UserName,
             Email = request.Email,
-            PhoneNumber = request.PhoneNumber,
-            FullName = $"{request.FirstName} {request.LastName}".Trim()
+            PhoneNumber = request.PhoneNumber
         };
+
+        appUser.Id = Guid.NewGuid();
+        if (request.ProfileImage != null)
+        {
+            var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
+                new[] { request.ProfileImage },
+                FileLocations.Users,
+                appUser.Id,
+                childFolder: null,
+                overwrite: true,
+                cancellationToken: cancellationToken);
+
+            if (profileImageUrls.Count > 0)
+                appUser.ProfileImage = profileImageUrls[0];
+        }
 
         using var trans = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         try
@@ -45,19 +63,14 @@ internal class AddCustomerCommandHandler(
                 return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
             }
 
-            var addToRoleResult = await userManager.AddToRoleAsync(appUser, "Customer");
+            var addToRoleResult = await userManager.AddToRoleAsync(appUser, Roles.Customer);
             if (!addToRoleResult.Succeeded)
             {
                 await trans.RollbackAsync(cancellationToken);
                 return new ApiResponse<string>(RoleErrors.InvalidPermissions());
             }
 
-            var claims = new List<Claim>
-            {
-                new Claim("Edit Customer", "True"),
-                new Claim("Get Customer", "True")
-            };
-            var addDefaultClaimsResult = await userManager.AddClaimsAsync(appUser, claims);
+            var addDefaultClaimsResult = await defaultClaimsService.AssignDefaultClaimsAsync(appUser, Roles.Customer);
             if (!addDefaultClaimsResult.Succeeded)
             {
                 await trans.RollbackAsync(cancellationToken);
@@ -69,16 +82,32 @@ internal class AddCustomerCommandHandler(
             var returnUrl = resquestAccessor.Scheme + "://" + resquestAccessor.Host
                 + urlHelper.Action("ConfirmEmail", "Authentication", new { userId = appUser.Id, code = code });
 
-            var customer = new Customer
+            var customer = new Customer(
+                appUserId: appUser.Id,
+                fullName: fullName,
+                gender: request.Gender ?? Gender.Unspecified,
+                createdBy: appUser.Id
+            );
+
+            if (!string.IsNullOrWhiteSpace(request.PhoneNumber))
             {
-                Id = Guid.NewGuid(),
-                AppUserId = appUser.Id,
-                FullName = $"{request.FirstName} {request.LastName}".Trim(),
-                Gender = request.Gender
-            };
+                customer.ChangePhoneNumber(request.PhoneNumber, appUser.Id);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.SecondPhoneNumber))
+            {
+                customer.ChangeSecondPhoneNumber(request.SecondPhoneNumber, appUser.Id);
+            }
 
             await dbContext.Customers.AddAsync(customer, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            await notificationService.CreateAsync(
+                "new_user",
+                new { userId = appUser.Id, userName = appUser.UserName, role = Roles.Customer },
+                new NotificationRecipients(),
+                cancellationToken);
+
             await trans.CommitAsync(cancellationToken);
             return Created("");
         }

@@ -13,7 +13,7 @@ public class AddCategoryCommandHandler(IUnitOfWork unitOfWork) : ApiResponseHand
                 Description = request.Description
             };
 
-            await unitOfWork.Categories.AddAsync(category);
+            await unitOfWork.Categories.AddAsync(category, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Created("");
         }

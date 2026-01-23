@@ -1,3 +1,5 @@
+using Domain.Entities.Reviews;
+
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
 public interface IReviewRepository : IGenericRepositoryAsync<Review>

@@ -22,7 +22,7 @@ public class DeleteReviewCommandHandler(
 
         try
         {
-            await unitOfWork.Reviews.DeleteAsync(review);
+            await unitOfWork.Reviews.DeleteAsync(review, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Deleted<string>();
         }

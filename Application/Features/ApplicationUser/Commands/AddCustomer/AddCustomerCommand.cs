@@ -8,7 +8,9 @@ public record AddCustomerCommand : IRequest<ApiResponse<string>>
     public string? Email { get; init; }
     public Gender? Gender { get; init; }
     public string? PhoneNumber { get; init; }
+    public string? SecondPhoneNumber { get; init; }
     public string? Password { get; init; }
     public string? ConfirmPassword { get; init; }
+    public IFormFile? ProfileImage { get; init; }
 }
 

@@ -1,6 +1,6 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
-using Domain.Entities;
+using Domain.Entities.Cart;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -24,7 +24,7 @@ public class AddToCartCommandHandler(
             var existingCart = GetCartByKey(cartKey) ?? new Cart
             {
                 CustomerId = ownerId,
-                CreatedAt = DateTimeOffset.UtcNow.ToLocalTime(),
+                CreatedTime = DateTimeOffset.UtcNow.ToLocalTime(),
                 CartItems = new List<CartItem>(),
                 TotalAmount = 0,
             };
@@ -45,10 +45,10 @@ public class AddToCartCommandHandler(
                 ProductId = request.ProductId,
                 Price = existingProduct.Price,
                 Quantity = request.Quantity,
-                CreatedAt = DateTimeOffset.UtcNow.ToLocalTime(),
+                CreatedTime = DateTimeOffset.UtcNow.ToLocalTime(),
                 SubAmount = existingProduct.Price * request.Quantity
             });
-            existingCart.TotalAmount = (existingCart.TotalAmount ?? 0) + (existingProduct.Price ?? 0) * request.Quantity;
+            existingCart.TotalAmount = (existingCart.TotalAmount ?? 0) + existingProduct.Price * request.Quantity;
 
             var result = AddOrEditCart(existingCart);
             if (result is null) return new ApiResponse<string>(CartErrors.CannotModifyCart());
@@ -68,7 +68,7 @@ public class AddToCartCommandHandler(
 
         if (existingCart is not null)
         {
-            cart.CreatedAt = cart.CreatedAt == default ? existingCart.CreatedAt : DateTimeOffset.UtcNow.ToLocalTime();
+            cart.CreatedTime = cart.CreatedTime == default ? existingCart.CreatedTime : DateTimeOffset.UtcNow.ToLocalTime();
             cart.CustomerId = cart.CustomerId == Guid.Empty ? existingCart.CustomerId : cart.CustomerId;
             cart.CartItems = cart.CartItems ?? existingCart.CartItems;
             cart.TotalAmount = cart.TotalAmount ?? existingCart.TotalAmount;

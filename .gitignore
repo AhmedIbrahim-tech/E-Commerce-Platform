@@ -364,3 +364,7 @@ FodyWeavers.xsd
 
 # Environment variables
 .env
+
+# Cursor IDE files
+.Files/
+.cursorrules

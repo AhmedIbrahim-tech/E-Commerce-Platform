@@ -1,7 +1,4 @@
-using Application.Common.Helpers;
-using Application.Common.Settings;
-using Infrastructure.Data;
-using Infrastructure.Data.Identity;
+using Infrastructure.Data.Authorization;
 
 namespace Application.ServicesHandlers.OAuth;
 
@@ -17,16 +14,19 @@ public class AuthGoogleService : IAuthGoogleService
     private readonly GoogleAuthSettings _settings;
     private readonly IAuthenticationService _authenticationService;
     private readonly ApplicationDbContext _dbContext;
+    private readonly IDefaultClaimsService _defaultClaimsService;
 
     public AuthGoogleService(UserManager<AppUser> userManager,
         GoogleAuthSettings settings,
         IAuthenticationService authenticationService,
-        ApplicationDbContext dbContext)
+        ApplicationDbContext dbContext,
+        IDefaultClaimsService defaultClaimsService)
     {
         _userManager = userManager;
         _settings = settings;
         _authenticationService = authenticationService;
         _dbContext = dbContext;
+        _defaultClaimsService = defaultClaimsService;
     }
 
     public async Task<(JwtAuthResponse, string)> AuthenticateWithGoogleAsync(string idToken)
@@ -42,13 +42,13 @@ public class AuthGoogleService : IAuthGoogleService
 
             if (user == null)
             {
-                var appUser = new AppUser
+                var fullName = $"{payload.GivenName} {payload.FamilyName}".Trim();
+                var userName = payload.Email.Split('@')[0];
+                var appUser = new AppUser(userName, fullName)
                 {
-                    UserName = payload.Email.Split('@')[0],
                     Email = payload.Email,
                     EmailConfirmed = payload.EmailVerified,
-                    PhoneNumber = "N/A",
-                    FullName = $"{payload.GivenName} {payload.FamilyName}".Trim()
+                    PhoneNumber = "N/A"
                 };
 
                 var result = await _userManager.CreateAsync(appUser);
@@ -58,27 +58,21 @@ public class AuthGoogleService : IAuthGoogleService
                     return (null!, $"Failed to create user: {errors}");
                 }
 
-                var customer = new Customer
-                {
-                    Id = Guid.NewGuid(),
-                    AppUserId = appUser.Id,
-                    FullName = $"{payload.GivenName} {payload.FamilyName}".Trim(),
-                    Gender = Gender.Unspecified
-                };
+                var customer = new Customer(
+                    appUserId: appUser.Id,
+                    fullName: fullName,
+                    gender: Gender.Unspecified,
+                    createdBy: appUser.Id
+                );
 
-                await _dbContext.Customers.AddAsync(customer);
-                await _dbContext.SaveChangesAsync();
+                await _dbContext.Customers.AddAsync(customer, CancellationToken.None);
+                await _dbContext.SaveChangesAsync(CancellationToken.None);
 
-                var addToRoleResult = await _userManager.AddToRoleAsync(appUser, "Customer");
+                var addToRoleResult = await _userManager.AddToRoleAsync(appUser, Roles.Customer);
                 if (!addToRoleResult.Succeeded)
                     return (null!, "FailedToAddNewRoles");
 
-                var claims = new List<Claim>
-                {
-                    new Claim("Edit Customer", "True"),
-                    new Claim("Get Customer", "True")
-                };
-                var addDefaultClaimsResult = await _userManager.AddClaimsAsync(appUser, claims);
+                var addDefaultClaimsResult = await _defaultClaimsService.AssignDefaultClaimsAsync(appUser, Roles.Customer);
                 if (!addDefaultClaimsResult.Succeeded)
                     return (null!, "FailedToAddNewClaims");
 

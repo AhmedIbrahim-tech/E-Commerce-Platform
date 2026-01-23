@@ -1,3 +1,4 @@
+using Domain.Entities.Cart;
 using System.Text.Json;
 
 namespace Application.Features.Carts.Commands.UpdateItemQuantity;
@@ -30,7 +31,7 @@ public class UpdateItemQuantityCommandHandler(
 
             var oldSubAmount = itemToUpdate.SubAmount ?? 0;
             itemToUpdate.Quantity = request.Quantity;
-            itemToUpdate.SubAmount = (existingProduct.Price ?? 0) * request.Quantity;
+            itemToUpdate.SubAmount = existingProduct.Price * request.Quantity;
             existingCart.TotalAmount = (existingCart.TotalAmount ?? 0) - oldSubAmount + (itemToUpdate.SubAmount ?? 0);
 
             var result = AddOrEditCart(existingCart);
@@ -59,7 +60,7 @@ public class UpdateItemQuantityCommandHandler(
 
         if (existingCart is not null)
         {
-            cart.CreatedAt = cart.CreatedAt == default ? existingCart.CreatedAt : DateTimeOffset.UtcNow.ToLocalTime();
+            cart.CreatedTime = cart.CreatedTime == default ? existingCart.CreatedTime : DateTimeOffset.UtcNow.ToLocalTime();
             cart.CustomerId = cart.CustomerId == Guid.Empty ? existingCart.CustomerId : cart.CustomerId;
             cart.CartItems = cart.CartItems ?? existingCart.CartItems;
             cart.TotalAmount = cart.TotalAmount ?? existingCart.TotalAmount;

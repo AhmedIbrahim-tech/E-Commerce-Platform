@@ -1,5 +1,6 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
+using Domain.Entities.Reviews;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.Reviews.Queries.GetReviewPaginatedList;
@@ -22,7 +23,7 @@ public class GetReviewPaginatedListQueryHandler(
             c.Product!.Name,
             c.Rating,
             c.Comment,
-            c.CreatedAt
+            c.CreatedTime
         );
 
         IQueryable<Review> queryable = unitOfWork.Reviews.GetTableNoTracking()
@@ -35,11 +36,11 @@ public class GetReviewPaginatedListQueryHandler(
 
         queryable = request.SortBy switch
         {
-            ReviewSortingEnum.CreatedDateAsc => queryable.OrderBy(c => c.CreatedAt),
-            ReviewSortingEnum.CreatedDateDesc => queryable.OrderByDescending(c => c.CreatedAt),
+            ReviewSortingEnum.CreatedDateAsc => queryable.OrderBy(c => c.CreatedTime),
+            ReviewSortingEnum.CreatedDateDesc => queryable.OrderByDescending(c => c.CreatedTime),
             ReviewSortingEnum.RatingAsc => queryable.OrderBy(c => c.Rating),
             ReviewSortingEnum.RatingDesc => queryable.OrderByDescending(c => c.Rating),
-            _ => queryable.OrderByDescending(c => c.CreatedAt)
+            _ => queryable.OrderByDescending(c => c.CreatedTime)
                           .ThenByDescending(c => c.Rating)
         };
 

@@ -19,7 +19,7 @@ public class DeleteCategoryCommandHandler(IUnitOfWork unitOfWork) : ApiResponseH
         var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            await unitOfWork.Categories.DeleteAsync(category);
+            await unitOfWork.Categories.DeleteAsync(category, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await unitOfWork.CommitTransactionAsync(cancellationToken);
             return Deleted<string>();

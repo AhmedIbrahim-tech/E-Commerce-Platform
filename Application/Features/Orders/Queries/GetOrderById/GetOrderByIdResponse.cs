@@ -3,9 +3,9 @@ namespace Application.Features.Orders.Queries.GetOrderById;
 public record class GetOrderByIdResponse()
 {
     public Guid Id { get; set; }
-    public DateTimeOffset? OrderDate { get; set; }
-    public Status? OrderStatus { get; set; }
-    public decimal? TotalAmount { get; set; }
+    public DateTimeOffset OrderDate { get; set; }
+    public Status OrderStatus { get; set; }
+    public decimal TotalAmount { get; set; }
     public string? CustomerName { get; set; }
     public string? ShippingAddress { get; set; }
     public PaymentMethod? PaymentMethod { get; set; }
@@ -20,6 +20,6 @@ public record class GetOrderByIdResponse()
 public record class OrderItemResponse(
     Guid ProductId,
     string? ProductName,
-    int? Quantity,
-    decimal? UnitPrice);
+    int Quantity,
+    decimal UnitPrice);
 

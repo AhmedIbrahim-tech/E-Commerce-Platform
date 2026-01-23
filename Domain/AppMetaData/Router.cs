@@ -8,12 +8,6 @@ namespace Domain.AppMetaData
         public const string Version = "v1";
         public const string Rule = Root + "/" + Version + "/";
 
-        public static class EmailsRoute
-        {
-            public const string Prefix = Rule + "email/";
-            public const string SendEmail = Prefix + "sendEmail";
-        }
-
         public static class Authentication
         {
             public const string Prefix = Rule + "authenticate/";
@@ -25,6 +19,8 @@ namespace Domain.AppMetaData
             public const string ConfirmResetPasswordCode = Prefix + "confirmResetPasswordCode";
             public const string ResetPassword = Prefix + "resetPassword";
             public const string ConfirmEmail = "api/authenticate/confirmEmail";
+            public const string Logout = Prefix + "logout";
+            public const string LogoutAll = Prefix + "logoutAll";
         }
 
         public static class Authorization
@@ -47,12 +43,139 @@ namespace Domain.AppMetaData
         {
             public const string Prefix = Rule + "user/";
             public const string Register = Prefix + "register";
+            public const string Profile = Prefix + "profile";
             public const string ChangePassword = Prefix + "changePassword";
+            public const string CreateAdmin = Prefix + "createAdmin";
+            public const string CreateVendor = Prefix + "createVendor";
+
+            public const string MyActivitiesPaginated = Prefix + "activities/paginated";
+
+            public const string Documents = Prefix + "documents";
+            public const string DocumentById = Prefix + "documents/" + SingleRoute;
+            public const string DocumentDownload = Prefix + "documents/" + SingleRoute + "/download";
+
+            // Unified Users Management
+            public const string UsersPaginated = Prefix + "users/paginated";
+            public const string GetUserById = Prefix + "users/" + SingleRoute;
+            public const string CreateUser = Prefix + "users/create";
+            public const string EditUser = Prefix + "users/edit";
+            public const string DeleteUser = Prefix + "users/" + SingleRoute;
+            public const string ToggleUserStatus = Prefix + "users/" + SingleRoute + "/toggleStatus";
         }
 
         public static class CategoryRouting
         {
             public const string Prefix = Rule + "category/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + "getById";
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + "delete";
+        }
+
+        public static class SubCategoryRouting
+        {
+            public const string Prefix = Rule + "subCategory/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class BrandRouting
+        {
+            public const string Prefix = Rule + "brand/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class TagRouting
+        {
+            public const string Prefix = Rule + "tag/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + "getById";
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + "delete";
+        }
+
+        public static class UnitOfMeasureRouting
+        {
+            public const string Prefix = Rule + "unit/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class WarrantyRouting
+        {
+            public const string Prefix = Rule + "warranty/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + "getById";
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + "delete";
+        }
+
+        public static class VariantAttributeRouting
+        {
+            public const string Prefix = Rule + "variantAttribute/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class CouponRouting
+        {
+            public const string Prefix = Rule + "coupon/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class GiftCardRouting
+        {
+            public const string Prefix = Rule + "giftCard/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class DiscountRouting
+        {
+            public const string Prefix = Rule + "discount/";
+            public const string GetAll = Prefix + "getAll";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+        }
+
+        public static class AccountRouting
+        {
+            public const string Prefix = Rule + "account/";
             public const string GetAll = Prefix + "getAll";
             public const string Paginated = Prefix + "paginated";
             public const string GetById = Prefix + SingleRoute;
@@ -98,8 +221,32 @@ namespace Domain.AppMetaData
             public const string Prefix = Rule + "customer/";
             public const string Paginated = Prefix + "paginated";
             public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
             public const string Edit = Prefix + "edit";
             public const string Delete = Prefix + SingleRoute;
+            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
+        }
+
+        public static class VendorRouting
+        {
+            public const string Prefix = Rule + "vendor/";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
+        }
+
+        public static class AdminRouting
+        {
+            public const string Prefix = Rule + "admin/";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+            public const string Create = Prefix + "create";
+            public const string Edit = Prefix + "edit";
+            public const string Delete = Prefix + SingleRoute;
+            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
         }
 
         public static class EmployeeRouting
@@ -151,9 +298,39 @@ namespace Domain.AppMetaData
         public static class NotificationsRouting
         {
             public const string Prefix = Rule + "notifications/";
+            public const string List = Prefix;
             public const string Paginated = Prefix + "paginated";
             public const string MarkAsRead = Prefix + "markAsRead/" + SingleRoute;
             public const string MarkAllAsRead = Prefix + "markAllAsRead";
+            public const string MarkRead = Prefix + "mark-read";
+        }
+
+        public static class AuditLogRouting
+        {
+            public const string Prefix = Rule + "auditLog/";
+            public const string Paginated = Prefix + "paginated";
+            public const string GetById = Prefix + SingleRoute;
+        }
+
+        public static class LookUpsRouting
+        {
+            public const string Prefix = Rule + "lookups/";
+            public const string Categories = Prefix + "categories";
+            public const string SubCategories = Prefix + "subCategories";
+            public const string SubCategoriesByCategory = Prefix + "subCategoriesByCategory";
+            public const string Brands = Prefix + "brands";
+            public const string UnitOfMeasures = Prefix + "unitOfMeasures";
+            public const string Warranties = Prefix + "warranties";
+            public const string VariantAttributes = Prefix + "variantAttributes";
+            public const string Roles = Prefix + "roles";
+
+            public const string ProductPublishStatuses = Prefix + "productPublishStatuses";
+            public const string ProductVisibilities = Prefix + "productVisibilities";
+            public const string ProductTypes = Prefix + "productTypes";
+            public const string SellingTypes = Prefix + "sellingTypes";
+            public const string TaxTypes = Prefix + "taxTypes";
+            public const string DiscountTypes = Prefix + "discountTypes";
+            public const string Tags = Prefix + "tags";
         }
     }
 }

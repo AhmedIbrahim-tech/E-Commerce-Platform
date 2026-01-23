@@ -1,3 +1,6 @@
+using API;
+using Hangfire;
+
 Env.Load(); // Load environment variables from .env file
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,19 +19,38 @@ await app.ApplyMigrationsAsync();
 // Seed application data
 await app.SeedApplicationDataAsync();
 
-// Configure middleware pipeline
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+
+        options.IndexStream = () =>
+            File.OpenRead(Path.Combine(
+                app.Environment.ContentRootPath,
+                "wwwroot",
+                "swagger",
+                "index.html"
+            ));
+    });
 }
 
 app.UseMiddleware<ErrorHandlerMiddleware>();
 app.UseHttpsRedirection();
 app.UseApplicationCors();
-app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Hangfire Dashboard (consider adding authentication in production)
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    DashboardTitle = "Tajerly Hangfire Dashboard",
+    Authorization = new[] { new HangfireAuthorizationFilter() }
+});
 
 app.MapControllers();
 app.MapHub<NotificationsHub>("/hubs/notifications");

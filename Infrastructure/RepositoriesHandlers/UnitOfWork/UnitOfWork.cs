@@ -1,8 +1,22 @@
+using Infrastructure.RepositoriesHandlers.Repositories.Accounts;
+
 namespace Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 public interface IUnitOfWork : IDisposable
 {
+    ApplicationDbContext Context { get; }
     ICategoryRepository Categories { get; }
+    ISubCategoryRepository SubCategories { get; }
+    IBrandRepository Brands { get; }
+    IUnitOfMeasureRepository UnitOfMeasures { get; }
+    IWarrantyRepository Warranties { get; }
+    IVariantAttributeRepository VariantAttributes { get; }
+    ITagRepository Tags { get; }
+    ICouponRepository Coupons { get; }
+    IGiftCardRepository GiftCards { get; }
+    IDiscountRepository Discounts { get; }
+    IDiscountPlanRepository DiscountPlans { get; }
+    IAccountRepository Accounts { get; }
     IProductRepository Products { get; }
     IOrderRepository Orders { get; }
     IOrderItemRepository OrderItems { get; }
@@ -11,6 +25,8 @@ public interface IUnitOfWork : IDisposable
     IPaymentRepository Payments { get; }
     IDeliveryRepository Deliveries { get; }
     IRefreshTokenRepository RefreshTokens { get; }
+    INotificationRepository Notifications { get; }
+    IDocumentRepository Documents { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
@@ -21,9 +37,21 @@ public interface IUnitOfWork : IDisposable
 
 public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
 {
+    public ApplicationDbContext Context { get; } = Context;
     private IDbContextTransaction? _transaction;
 
     private ICategoryRepository? _categories;
+    private ISubCategoryRepository? _subCategories;
+    private IBrandRepository? _brands;
+    private IUnitOfMeasureRepository? _unitOfMeasures;
+    private IWarrantyRepository? _warranties;
+    private IVariantAttributeRepository? _variantAttributes;
+    private ITagRepository? _tags;
+    private ICouponRepository? _coupons;
+    private IGiftCardRepository? _giftCards;
+    private IDiscountRepository? _discounts;
+    private IDiscountPlanRepository? _discountPlans;
+    private IAccountRepository? _accounts;
     private IProductRepository? _products;
     private IOrderRepository? _orders;
     private IOrderItemRepository? _orderItems;
@@ -32,6 +60,8 @@ public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
     private IPaymentRepository? _payments;
     private IDeliveryRepository? _deliveries;
     private IRefreshTokenRepository? _refreshTokens;
+    private INotificationRepository? _notifications;
+    private IDocumentRepository? _documents;
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
@@ -62,6 +92,28 @@ public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
 
     public ICategoryRepository Categories => _categories ??= new CategoryRepository(Context);
 
+    public ISubCategoryRepository SubCategories => _subCategories ??= new SubCategoryRepository(Context);
+
+    public IBrandRepository Brands => _brands ??= new BrandRepository(Context);
+
+    public IUnitOfMeasureRepository UnitOfMeasures => _unitOfMeasures ??= new UnitOfMeasureRepository(Context);
+
+    public IWarrantyRepository Warranties => _warranties ??= new WarrantyRepository(Context);
+
+    public IVariantAttributeRepository VariantAttributes => _variantAttributes ??= new VariantAttributeRepository(Context);
+
+    public ITagRepository Tags => _tags ??= new TagRepository(Context);
+
+    public ICouponRepository Coupons => _coupons ??= new CouponRepository(Context);
+
+    public IGiftCardRepository GiftCards => _giftCards ??= new GiftCardRepository(Context);
+
+    public IDiscountRepository Discounts => _discounts ??= new DiscountRepository(Context);
+
+    public IDiscountPlanRepository DiscountPlans => _discountPlans ??= new DiscountPlanRepository(Context);
+
+    public IAccountRepository Accounts => _accounts ??= new AccountRepository(Context);
+
     public IProductRepository Products => _products ??= new ProductRepository(Context);
 
     public IOrderRepository Orders => _orders ??= new OrderRepository(Context);
@@ -77,6 +129,10 @@ public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
     public IDeliveryRepository Deliveries => _deliveries ??= new DeliveryRepository(Context);
 
     public IRefreshTokenRepository RefreshTokens => _refreshTokens ??= new RefreshTokenRepository(Context);
+
+    public INotificationRepository Notifications => _notifications ??= new NotificationRepository(Context);
+
+    public IDocumentRepository Documents => _documents ??= new DocumentRepository(Context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

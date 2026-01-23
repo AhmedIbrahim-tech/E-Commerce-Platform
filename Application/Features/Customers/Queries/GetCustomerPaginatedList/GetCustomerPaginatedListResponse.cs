@@ -7,5 +7,7 @@ public record GetCustomerPaginatedListResponse
     public string? Email { get; init; }
     public string? PhoneNumber { get; init; }
     public Gender? Gender { get; init; }
+    public string? Role { get; init; }
+    public string? ProfileImage { get; init; }
 }
 

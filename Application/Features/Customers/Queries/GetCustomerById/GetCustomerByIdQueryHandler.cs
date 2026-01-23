@@ -31,6 +31,7 @@ public class GetCustomerByIdQueryHandler : ApiResponseHandler,
         {
             Id = customer.Id,
             FullName = customer.FullName ?? string.Empty,
+            UserName = appUser.UserName ?? string.Empty,
             Email = appUser.Email ?? string.Empty,
             PhoneNumber = appUser.PhoneNumber ?? string.Empty,
             Gender = customer.Gender

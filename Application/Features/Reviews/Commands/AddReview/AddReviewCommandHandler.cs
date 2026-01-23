@@ -19,10 +19,10 @@ public class AddReviewCommandHandler(
                 Rating = request.Rating,
                 Comment = request.Comment,
                 CustomerId = currentUserService.GetUserId(),
-                CreatedAt = DateTimeOffset.UtcNow.ToLocalTime()
+                CreatedTime = DateTimeOffset.UtcNow.ToLocalTime()
             };
 
-            await unitOfWork.Reviews.AddAsync(review);
+            await unitOfWork.Reviews.AddAsync(review, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Created("");
         }

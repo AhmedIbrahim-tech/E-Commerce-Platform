@@ -4,42 +4,52 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.ToTable("orders");
-
         builder.HasKey(o => o.Id);
 
         builder.Property(o => o.Id)
-            .ValueGeneratedNever()
-            .ConfigureGuid("id", isRequired: true);
+            .ValueGeneratedOnAdd()
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(o => o.OrderDate)
-            .ConfigureTimestamp("order_date", hasDefaultValue: true, isRequired: true);
+            .ConfigureTimestamp(hasDefaultValue: true, isRequired: true);
+
+        builder.Property(o => o.CreatedTime)
+            .ConfigureTimestamp(hasDefaultValue: true, isRequired: true);
+
+        builder.Property(o => o.CreatedBy)
+            .ConfigureGuid(isRequired: true);
+
+        builder.Property(o => o.ModifiedTime)
+            .ConfigureTimestamp(hasDefaultValue: false, isRequired: false);
+
+        builder.Property(o => o.ModifiedBy)
+            .ConfigureGuid(isRequired: false);
 
         builder.Property(o => o.Status)
-            .ConfigureEnum("status", isRequired: true);
+            .ConfigureEnum(isRequired: true);
 
         builder.Property(o => o.TotalAmount)
-            .ConfigureDecimal("total_amount", precision: 18, scale: 2, isRequired: true);
+            .ConfigureDecimal(precision: 18, scale: 2, isRequired: true);
 
         builder.Property(o => o.CustomerId)
-            .ConfigureGuid("customer_id", isRequired: true);
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(o => o.ShippingAddressId)
-            .ConfigureGuid("shipping_address_id", isRequired: false);
+            .ConfigureGuid(isRequired: false);
 
         builder.Property(o => o.PaymentId)
-            .ConfigureGuid("payment_id", isRequired: false);
+            .ConfigureGuid(isRequired: false);
 
         builder.Property(o => o.DeliveryId)
-            .ConfigureGuid("delivery_id", isRequired: false);
+            .ConfigureGuid(isRequired: false);
 
         builder.Ignore(o => o.PaymentToken);
 
         // Foreign key relationships
         builder.HasOne(o => o.Customer)
-            .WithMany(c => c.Orders)
+            .WithMany()
             .HasForeignKey(o => o.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.HasOne(o => o.ShippingAddress)
             .WithOne()

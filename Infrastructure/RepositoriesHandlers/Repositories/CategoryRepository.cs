@@ -1,3 +1,5 @@
+using Domain.Entities.Catalog;
+
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
 public interface ICategoryRepository : IGenericRepositoryAsync<Category>

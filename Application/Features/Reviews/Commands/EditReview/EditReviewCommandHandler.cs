@@ -24,7 +24,7 @@ public class EditReviewCommandHandler(
 
         try
         {
-            await unitOfWork.Reviews.UpdateAsync(review);
+            await unitOfWork.Reviews.UpdateAsync(review, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Edit("");
         }

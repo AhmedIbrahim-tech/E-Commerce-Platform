@@ -28,7 +28,7 @@ public class AddCategoryValidator : AbstractValidator<AddCategoryCommand>
     {
         RuleFor(c => c.Name)
             .MustAsync(async (name, cancellation) => !await _unitOfWork.Categories.GetTableNoTracking()
-                .Where(c => c.Name!.Equals(name))
+                .Where(c => c.Name.Equals(name))
                 .AnyAsync(cancellation))
             .WithMessage("Already exists");
     }

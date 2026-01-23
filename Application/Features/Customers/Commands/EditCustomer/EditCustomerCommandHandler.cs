@@ -40,11 +40,18 @@ public class EditCustomerCommandHandler : ApiResponseHandler,
         appUser.UserName = request.UserName;
         appUser.Email = request.Email;
         appUser.PhoneNumber = request.PhoneNumber;
-        appUser.FullName = $"{request.FirstName} {request.LastName}".Trim();
+        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        appUser.SetDisplayName(fullName);
 
         // Update Customer properties
-        customer.FullName = $"{request.FirstName} {request.LastName}".Trim();
-        customer.Gender = request.Gender;
+        customer.ChangeName(fullName, appUser.Id);
+        if (request.Gender.HasValue)
+        {
+            customer.ChangeGender(request.Gender.Value, appUser.Id);
+        }
+
+        customer.ChangePhoneNumber(request.PhoneNumber, appUser.Id);
+        customer.ChangeSecondPhoneNumber(request.SecondPhoneNumber, appUser.Id);
 
         var updateAppUserResult = await _userManager.UpdateAsync(appUser);
         if (!updateAppUserResult.Succeeded)

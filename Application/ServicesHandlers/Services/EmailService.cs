@@ -1,135 +1,86 @@
-using Application.Common.Settings;
+using Hangfire;
 using MailKit.Net.Smtp;
-using Microsoft.Extensions.Options;
 using MimeKit;
 
 namespace Application.ServicesHandlers.Services;
 
 public interface IEmailService
 {
-    Task<string> SendEmailAsync(string email, string returnUrl, EmailType? emailType, Order? order = null);
+    Task<EmailDto> SendEmailsAsync(EmailDto emailDto, CancellationToken cancellationToken = default);
 }
 
-public class EmailService : IEmailService
+public class EmailService(IOptions<EmailSettings> emailSettings, IBackgroundJobClient backgroundJobClient) : IEmailService
 {
-    private readonly EmailSettings _emailSettings;
+    private readonly EmailSettings _emailSettings = emailSettings.Value;
 
-    public EmailService(IOptions<EmailSettings> emailSettings)
+    public async Task<EmailDto> SendEmailsAsync(EmailDto emailDto, CancellationToken cancellationToken = default)
     {
-        _emailSettings = emailSettings.Value;
+        if (emailDto == null)
+            throw new ArgumentNullException(nameof(emailDto), "EmailDto cannot be null.");
+
+        // Validate that at least one recipient is provided
+        var hasRecipients = !string.IsNullOrWhiteSpace(emailDto.MailTo) || (emailDto.MailToList != null && emailDto.MailToList.Any());
+
+        if (!hasRecipients)
+            throw new ArgumentException("At least one recipient email address is required.", nameof(emailDto));
+
+        if (string.IsNullOrWhiteSpace(emailDto.Subject))
+            throw new ArgumentException("Email subject is required.", nameof(emailDto));
+
+        if (string.IsNullOrWhiteSpace(emailDto.Body))
+            throw new ArgumentException("Email body is required.", nameof(emailDto));
+
+        // Convert IFormFile attachments to byte arrays for serialization
+        var serializableEmailDto = ConvertToSerializableEmailDto(emailDto);
+
+        // Enqueue email sending as a background job using Hangfire
+        backgroundJobClient.Enqueue(() => SendEmailBackgroundJob(serializableEmailDto));
+
+        return emailDto;
     }
 
-    public async Task<string> SendEmailAsync(string email, string returnUrl, EmailType? emailType, Order? order = null)
+    private static SerializableEmailDto ConvertToSerializableEmailDto(EmailDto emailDto)
     {
-        var paymentStatus = order?.Payment?.Status?.ToString() ?? "Unknown";
-        var statusColor = paymentStatus switch
+        var serializableDto = new SerializableEmailDto
         {
-            "Completed" => "green",
-            "Received" => "green",
-            "Failed" => "red",
-            "Pending" => "orange",
-            "Refunded" => "blue",
-            _ => "gray"
+            MailTo = emailDto.MailTo,
+            Subject = emailDto.Subject,
+            Body = emailDto.Body,
+            MailToList = emailDto.MailToList?.ToList() ?? [],
+            EmailCC = emailDto.EmailCC?.ToList() ?? [],
+            EmailBCC = emailDto.EmailBCC?.ToList() ?? [],
+            Priority = emailDto.Priority,
+            DocumentsList = emailDto.DocumentsList?.ToList() ?? []
         };
 
-        var bodybuilder = new BodyBuilder
+        // Convert IFormFile attachments to byte arrays
+        if (emailDto.Attachments != null && emailDto.Attachments.Any())
         {
-            HtmlBody = emailType switch
+            serializableDto.Attachments = [];
+            foreach (var attachment in emailDto.Attachments)
             {
-                EmailType.ConfirmEmail => $@"
-                             <div style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center;'>
-                                 <div style='max-width: 600px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin: auto;'>
-                                     <h2 style='color: #333;'>Confirm Your Email</h2>
-                                     <p style='color: #555; font-size: 16px;'>
-                                         Thank you for signing up! Please confirm your email by clicking the button below.
-                                     </p>
-                                     <a href='{returnUrl}' style='display: inline-block; background-color: #007bff; color: white; text-decoration: none; padding: 12px 20px; border-radius: 5px; font-size: 16px; margin-top: 20px;'>Confirm Email</a>
-                                     <p style='color: #999; font-size: 14px; margin-top: 20px;'>
-                                         If you didn't request this, you can safely ignore this email.
-                                     </p>
-                                 </div>
-                             </div>",
-                EmailType.ResetPassword => $@"
-                             <div style='font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; text-align: center;'>
-                                 <div style='max-width: 600px; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); margin: auto;'>
-                                     <h2 style='color: #333;'>Reset Your Password</h2>
-                                     <p style='color: #555; font-size: 16px;'>
-                                         We received a request to reset your password. Use the code below to proceed.
-                                     </p>
-                                     <div style='display: inline-block; background-color: #007bff; color: white; padding: 12px 20px; border-radius: 5px; font-size: 20px; margin-top: 20px; font-weight: bold;'>{returnUrl}</div>
-                                     <p style='color: #999; font-size: 14px; margin-top: 20px;'>
-                                         If you didn't request this, you can safely ignore this email.
-                                     </p>
-                                 </div>
-                             </div>",
-                EmailType.OrderConfirmation => $@"
-                              <html>
-                                  <body style='font-family: Arial, sans-serif; color: #333;'>
-                                      <h2>Order Placed Successfully!</h2>
-                                      <p>Dear {order?.Customer?.FullName ?? "Customer"},</p>
-                                      <p>Your order #{order?.Id} has been successfully placed. We're now preparing your items for delivery or pickup.</p>
-                             
-                                      <table style='border-collapse: collapse; width: 100%; max-width: 600px;'>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Order ID:</td>
-                                              <td style='padding: 8px;'>{order?.Id}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Order Date:</td>
-                                              <td style='padding: 8px;'>{order?.OrderDate:MMMM dd, yyyy}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Payment Status:</td>
-                                              <td style='padding: 8px; color: {statusColor};'>{paymentStatus}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Delivery Method:</td>
-                                              <td style='padding: 8px;'>{order?.Delivery?.DeliveryMethod}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Estimated Delivery Date:</td>
-                                              <td style='padding: 8px;'>{order?.Delivery?.DeliveryTime:MMMM dd, yyyy}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Order Cost:</td>
-                                              <td style='padding: 8px;'>{order?.TotalAmount}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Delivery Cost:</td>
-                                              <td style='padding: 8px;'>{order?.Delivery?.Cost}</td>
-                                          </tr>
-                                          <tr>
-                                              <td style='padding: 8px; font-weight: bold;'>Total Amount:</td>
-                                              <td style='padding: 8px;'>{order?.TotalAmount + order?.Delivery?.Cost:F2}</td>
-                                          </tr>
-                                      </table>
-                             
-                                      <p>You'll receive another notification when your order ships or is ready for pickup. If you have any questions, feel free to contact our support team.</p>
-                                      <p>Thank you for shopping with us!</p>
-                                      <p>Best regards,<br/>The SMarket Team</p>
-                                  </body>
-                              </html>",
-                _ => "Invalid email type"
-            },
-            TextBody = emailType switch
-            {
-                EmailType.ConfirmEmail => $"Thank you for signing up! Please confirm your email using this link: {returnUrl}",
-                EmailType.ResetPassword => $"We received a request to reset your password.\nYour reset code is: {returnUrl}",
-                _ => "Please confirm your email using the provided link."
+                if (attachment != null && attachment.Length > 0)
+                {
+                    using var stream = attachment.OpenReadStream();
+                    using var memoryStream = new MemoryStream();
+                    stream.CopyTo(memoryStream);
+                    serializableDto.Attachments.Add(new AttachmentData
+                    {
+                        FileName = attachment.FileName,
+                        Content = memoryStream.ToArray(),
+                        ContentType = attachment.ContentType
+                    });
+                }
             }
-        };
+        }
 
-        var message = new MimeMessage();
-        message.Body = bodybuilder.ToMessageBody();
-        message.From.Add(new MailboxAddress("Tajerly Support", _emailSettings.FromEmail));
-        message.To.Add(new MailboxAddress("Tajerly", email));
-        message.Subject = emailType switch
-        {
-            EmailType.ConfirmEmail => "Confirm Your Email",
-            EmailType.ResetPassword => "Reset Password",
-            EmailType.OrderConfirmation => "Order Placed Confirmation",
-            _ => "No Submitted"
-        };
+        return serializableDto;
+    }
+
+    [AutomaticRetry(Attempts = 3)]
+    public async Task SendEmailBackgroundJob(SerializableEmailDto emailDto)
+    {
+        var message = CreateMimeMessage(emailDto);
 
         using var smtp = new SmtpClient();
         try
@@ -138,12 +89,138 @@ public class EmailService : IEmailService
             await smtp.AuthenticateAsync(_emailSettings.UserName, _emailSettings.Password);
             await smtp.SendAsync(message);
             await smtp.DisconnectAsync(true);
-            return "Success";
+        }
+        catch (SmtpCommandException)
+        {
+            throw; // Let Hangfire handle retries
+        }
+        catch (SmtpProtocolException)
+        {
+            throw; // Let Hangfire handle retries
         }
         catch (Exception)
         {
-            return "Failed";
+            throw; // Let Hangfire handle retries
         }
+    }
+
+    private MimeMessage CreateMimeMessage(SerializableEmailDto emailDto)
+    {
+        var message = new MimeMessage();
+
+        // Set From
+        message.From.Add(new MailboxAddress("Tajerly Support", _emailSettings.FromEmail));
+
+        // Set To recipients
+        if (!string.IsNullOrWhiteSpace(emailDto.MailTo))
+        {
+            message.To.Add(new MailboxAddress("", emailDto.MailTo));
+        }
+
+        if (emailDto.MailToList != null && emailDto.MailToList.Any())
+        {
+            foreach (var email in emailDto.MailToList)
+            {
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    message.To.Add(new MailboxAddress("", email));
+                }
+            }
+        }
+
+        // Set CC recipients
+        if (emailDto.EmailCC != null && emailDto.EmailCC.Any())
+        {
+            foreach (var email in emailDto.EmailCC)
+            {
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    message.Cc.Add(new MailboxAddress("", email));
+                }
+            }
+        }
+
+        // Set BCC recipients
+        if (emailDto.EmailBCC != null && emailDto.EmailBCC.Any())
+        {
+            foreach (var email in emailDto.EmailBCC)
+            {
+                if (!string.IsNullOrWhiteSpace(email))
+                {
+                    message.Bcc.Add(new MailboxAddress("", email));
+                }
+            }
+        }
+
+        // Set Subject
+        message.Subject = emailDto.Subject;
+
+        // Set Priority
+        if (!string.IsNullOrWhiteSpace(emailDto.Priority))
+        {
+            message.Priority = emailDto.Priority.ToLower() switch
+            {
+                "high" => MessagePriority.Urgent,
+                "low" => MessagePriority.NonUrgent,
+                _ => MessagePriority.Normal
+            };
+        }
+
+        // Create body builder
+        var bodyBuilder = new BodyBuilder
+        {
+            HtmlBody = emailDto.Body,
+            TextBody = emailDto.Body
+        };
+
+        // Add attachments from byte arrays
+        if (emailDto.Attachments != null && emailDto.Attachments.Any())
+        {
+            foreach (var attachment in emailDto.Attachments)
+            {
+                if (attachment != null && attachment.Content != null && attachment.Content.Length > 0)
+                {
+                    using var stream = new MemoryStream(attachment.Content);
+                    bodyBuilder.Attachments.Add(attachment.FileName, stream, ContentType.Parse(attachment.ContentType));
+                }
+            }
+        }
+
+        // Add attachments from file paths
+        if (emailDto.DocumentsList != null && emailDto.DocumentsList.Any())
+        {
+            foreach (var document in emailDto.DocumentsList)
+            {
+                if (!string.IsNullOrWhiteSpace(document.FilePath) && File.Exists(document.FilePath))
+                {
+                    using var fileStream = File.OpenRead(document.FilePath);
+                    bodyBuilder.Attachments.Add(document.FileName, fileStream, ContentType.Parse(document.ContentType));
+                }
+            }
+        }
+
+        message.Body = bodyBuilder.ToMessageBody();
+
+        return message;
     }
 }
 
+public class SerializableEmailDto
+{
+    public string MailTo { get; set; } = string.Empty;
+    public string Subject { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    public List<AttachmentData>? Attachments { get; set; }
+    public List<DocumentsInfo> DocumentsList { get; set; } = new List<DocumentsInfo>();
+    public List<string> MailToList { get; set; } = new List<string>();
+    public List<string> EmailCC { get; set; } = new List<string>();
+    public List<string> EmailBCC { get; set; } = new List<string>();
+    public string Priority { get; set; } = "Normal";
+}
+
+public class AttachmentData
+{
+    public string FileName { get; set; } = string.Empty;
+    public byte[] Content { get; set; } = Array.Empty<byte>();
+    public string ContentType { get; set; } = "application/octet-stream";
+}

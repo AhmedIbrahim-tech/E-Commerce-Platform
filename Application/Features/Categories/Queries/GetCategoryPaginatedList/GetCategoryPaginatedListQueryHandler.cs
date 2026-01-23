@@ -1,4 +1,5 @@
 using Application.Common.Bases;
+using Domain.Entities.Catalog;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.Categories.Queries.GetCategoryPaginatedList;
@@ -10,14 +11,14 @@ public class GetCategoryPaginatedListQueryHandler(IUnitOfWork unitOfWork) : ApiR
     {
         Expression<Func<Category, GetCategoryPaginatedListResponse>> expression = c => new GetCategoryPaginatedListResponse(
             c.Id,
-            c.Name!,
+            c.Name,
             c.Description
         );
 
         var queryable = unitOfWork.Categories.GetTableNoTracking();
 
         if (!string.IsNullOrWhiteSpace(request.Search))
-            queryable = queryable.Where(c => c.Name!.Contains(request.Search!) || c.Description!.Contains(request.Search!));
+            queryable = queryable.Where(c => c.Name.Contains(request.Search!) || c.Description!.Contains(request.Search!));
 
         queryable = request.SortBy switch
         {

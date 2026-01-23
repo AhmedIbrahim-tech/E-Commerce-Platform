@@ -17,7 +17,7 @@ public class GetCategoryByIdQueryHandler(IUnitOfWork unitOfWork) : ApiResponseHa
 
         var categoryResponse = new GetCategoryByIdResponse(
             category.Id,
-            category.Name!,
+            category.Name,
             category.Description
         );
 

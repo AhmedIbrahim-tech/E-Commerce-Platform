@@ -1,0 +1,54 @@
+using Application.Features.Carts.Commands.AddToCart;
+using Application.Features.Carts.Commands.DeleteCart;
+using Application.Features.Carts.Commands.RemoveFromCart;
+using Application.Features.Carts.Commands.UpdateItemQuantity;
+using Application.Features.Carts.Queries.GetCartById;
+using Application.Features.Carts.Queries.GetMyCart;
+using Infrastructure.Data.Authorization;
+
+namespace API.Controllers.Cart;
+
+[Authorize]
+public class CartController : AppControllerBase
+{
+    [AllowAnonymous]
+    [HttpGet(Router.CartRouting.GetMyCart)]
+    public async Task<IActionResult> GetMyCart()
+    {
+        return NewResult(await Mediator.Send(new GetMyCartQuery()));
+    }
+
+    [Authorize(Roles = Roles.Admin)]
+    [HttpGet(Router.CartRouting.GetById)]
+    public async Task<IActionResult> GetCartById([FromRoute] Guid id)
+    {
+        return NewResult(await Mediator.Send(new GetCartByIdQuery(id)));
+    }
+
+    [AllowAnonymous]
+    [HttpPost(Router.CartRouting.AddToCart)]
+    public async Task<IActionResult> AddToCart([FromBody] AddToCartCommand command)
+    {
+        return NewResult(await Mediator.Send(command));
+    }
+
+    [AllowAnonymous]
+    [HttpPut(Router.CartRouting.UpdateItemQuantity)]
+    public async Task<IActionResult> UpdateItemQuantity([FromBody] UpdateItemQuantityCommand command)
+    {
+        return NewResult(await Mediator.Send(command));
+    }
+
+    [AllowAnonymous]
+    [HttpDelete(Router.CartRouting.RemoveFromCart)]
+    public async Task<IActionResult> RemoveFromCart([FromRoute] Guid id)
+    {
+        return NewResult(await Mediator.Send(new RemoveFromCartCommand(id)));
+    }
+
+    [HttpDelete(Router.CartRouting.Delete)]
+    public async Task<IActionResult> DeleteCart([FromRoute] Guid id)
+    {
+        return NewResult(await Mediator.Send(new DeleteCartCommand(id)));
+    }
+}

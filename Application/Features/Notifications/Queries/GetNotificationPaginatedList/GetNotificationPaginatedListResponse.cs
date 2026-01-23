@@ -1,9 +1,9 @@
 namespace Application.Features.Notifications.Queries.GetNotificationPaginatedList;
 
 public record GetNotificationPaginatedListResponse
-   (string Id,
-    string? ReceiverId,
-    string? Message,
-    DateTimeOffset CreatedAt,
-    bool IsRead);
+   (Guid Id,
+    string Type,
+    System.Text.Json.JsonElement Data,
+    bool IsRead,
+    DateTimeOffset CreatedAt);
 

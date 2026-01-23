@@ -1,6 +1,6 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
-using Domain.Entities;
+using Domain.Entities.Cart;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -28,7 +28,7 @@ public class RemoveFromCartCommandHandler(
 
         if (existingCart is not null)
         {
-            cart.CreatedAt = cart.CreatedAt == default ? existingCart.CreatedAt : DateTimeOffset.UtcNow.ToLocalTime();
+            cart.CreatedTime = cart.CreatedTime == default ? existingCart.CreatedTime : DateTimeOffset.UtcNow.ToLocalTime();
             cart.CustomerId = cart.CustomerId == Guid.Empty ? existingCart.CustomerId : cart.CustomerId;
             cart.CartItems = cart.CartItems ?? existingCart.CartItems;
             cart.TotalAmount = cart.TotalAmount ?? existingCart.TotalAmount;

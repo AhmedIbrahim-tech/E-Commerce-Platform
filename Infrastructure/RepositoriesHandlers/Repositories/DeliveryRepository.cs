@@ -1,3 +1,5 @@
+using Domain.Entities.Orders;
+
 namespace Infrastructure.RepositoriesHandlers.Repositories;
 
 public interface IDeliveryRepository : IGenericRepositoryAsync<Delivery>

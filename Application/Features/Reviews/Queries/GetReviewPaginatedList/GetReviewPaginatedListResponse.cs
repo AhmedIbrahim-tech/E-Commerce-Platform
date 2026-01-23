@@ -4,7 +4,7 @@ public record GetReviewPaginatedListResponse
 (
     string? UserName,
     string? ProductName,
-    Rating? Rating,
+    Rating Rating,
     string? Comment,
-    DateTimeOffset? CreatedAt);
+    DateTimeOffset CreatedTime);
 

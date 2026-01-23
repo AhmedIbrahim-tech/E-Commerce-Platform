@@ -1,22 +1,20 @@
 using Application.Common.Settings;
-using Application.Filters;
-using Application.ServicesHandlers.Services;
-using Infrastructure.Data;
+using Hangfire;
+using Hangfire.SqlServer;
+using Infrastructure.Data.Authorization;
 using Infrastructure.Data.Identity;
 using Infrastructure.Seeder;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.AspNetCore.Mvc.Routing;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using System.Text;
 
-namespace API.Extensions;
+namespace API;
 
 public static class ServiceRegistration
 {
@@ -24,41 +22,26 @@ public static class ServiceRegistration
 
     public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add core services
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen();
 
-        // Database and Cache configuration
         services.AddDatabaseConfiguration(configuration);
 
-        // Dependency Injections
         services
             .AddInfrastructureDependencies()
             .AddApplicationDependencies(configuration)
             .AddServiceRegistration(configuration);
 
-        // Additional services
-        services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
         services.AddSignalR();
         services.AddScoped<INotificationSender, NotificationSender>();
-        services.AddTransient<IUrlHelper>(sp =>
-        {
-            var actionContextAccessor = sp.GetRequiredService<IActionContextAccessor>();
-            var actionContext = actionContextAccessor.ActionContext;
-            
-            if (actionContext == null)
-            {
-                throw new InvalidOperationException("ActionContext is not available. IUrlHelper can only be used within a request context.");
-            }
-            
-            var factory = sp.GetRequiredService<IUrlHelperFactory>();
-            return factory.GetUrlHelper(actionContext);
-        });
-
+        services.AddScoped<IUrlHelper>(CreateUrlHelper);
         services.AddTransient<AuthFilter>();
 
-        // Encryption
         var encryptionKey = configuration["Encryption:Key"];
         services.AddSingleton<IEncryptionProvider>(new GenerateEncryptionProvider(encryptionKey));
 
@@ -104,59 +87,122 @@ public static class ServiceRegistration
 
         services.AddMemoryCache();
 
+        // Configure Hangfire
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(sqlConnectionString, new Hangfire.SqlServer.SqlServerStorageOptions
+            {
+                CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+                SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+                QueuePollInterval = TimeSpan.Zero,
+                UseRecommendedIsolationLevel = true,
+                DisableGlobalLocks = true
+            }));
+
+        services.AddHangfireServer();
+
         return services;
     }
 
     public static async Task ApplyMigrationsAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var services = scope.ServiceProvider;
-
-        try
-        {
-            var context = services.GetRequiredService<ApplicationDbContext>();
-            await context.Database.MigrateAsync();
-        }
-        catch (Exception)
-        {
-            throw;
-        }
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await context.Database.MigrateAsync();
     }
 
     public static async Task SeedApplicationDataAsync(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var serviceProvider = scope.ServiceProvider;
+        
+        var userManager = serviceProvider.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = serviceProvider.GetRequiredService<RoleManager<AppRole>>();
+        var dbContext = serviceProvider.GetRequiredService<ApplicationDbContext>();
+        var defaultClaimsService = serviceProvider.GetRequiredService<IDefaultClaimsService>();
 
         await RoleSeeder.SeedAsync(roleManager);
-        await UserSeeder.SeedAsync(userManager, dbContext);
+        await UserSeeder.SeedAsync(userManager, dbContext, defaultClaimsService);
+        
+        var defaultUser = await userManager.FindByNameAsync(UserSeeder.DefaultUsername) ?? await userManager.FindByEmailAsync(UserSeeder.DefaultEmail);
+        var defaultUserId = defaultUser?.Id ?? Guid.Empty;
+        
+        await Infrastructure.Seeder.CategorySeeder.SeedAsync(dbContext);
+        await Infrastructure.Seeder.SubCategorySeeder.SeedAsync(dbContext, defaultUserId);
+        await Infrastructure.Seeder.BrandSeeder.SeedAsync(dbContext, defaultUserId);
+        await Infrastructure.Seeder.UnitOfMeasureSeeder.SeedAsync(dbContext, defaultUserId);
+        await Infrastructure.Seeder.WarrantySeeder.SeedAsync(dbContext, defaultUserId);
+        await Infrastructure.Seeder.VariantAttributeSeeder.SeedAsync(dbContext, defaultUserId);
+        await Infrastructure.Seeder.TagSeeder.SeedAsync(dbContext, defaultUserId);
+    }
+
+    private static IUrlHelper CreateUrlHelper(IServiceProvider serviceProvider)
+    {
+        var httpContextAccessor = serviceProvider.GetRequiredService<IHttpContextAccessor>();
+        var httpContext = httpContextAccessor.HttpContext;
+        
+        if (httpContext == null)
+        {
+            throw new InvalidOperationException("HttpContext is not available. IUrlHelper can only be used within a request context.");
+        }
+        
+        var actionContext = new ActionContext
+        {
+            HttpContext = httpContext,
+            RouteData = httpContext.GetRouteData() ?? new RouteData(),
+            ActionDescriptor = httpContext.GetEndpoint()?.Metadata.GetMetadata<ActionDescriptor>() ?? new ActionDescriptor()
+        };
+        
+        var factory = serviceProvider.GetRequiredService<IUrlHelperFactory>();
+        return factory.GetUrlHelper(actionContext);
     }
 
     private static IServiceCollection AddAuthConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddIdentity<AppUser, AppRole>(options =>
-        {
-            options.Password.RequireDigit = true;
-            options.Password.RequireLowercase = true;
-            options.Password.RequireNonAlphanumeric = false;
-            options.Password.RequireUppercase = true;
-            options.Password.RequiredLength = 8;
-            options.Password.RequiredUniqueChars = 1;
+        services.AddIdentity<AppUser, AppRole>(ConfigureIdentityOptions)
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddDefaultTokenProviders();
 
-            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
-            options.Lockout.MaxFailedAccessAttempts = 5;
-            options.Lockout.AllowedForNewUsers = true;
+        services.AddApplicationSettings(configuration);
+        services.AddAuthentication(ConfigureAuthenticationOptions)
+            .AddJwtBearer();
 
-            options.User.AllowedUserNameCharacters =
-                "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
-            options.User.RequireUniqueEmail = true;
-            options.SignIn.RequireConfirmedEmail = true;
-        })
-        .AddEntityFrameworkStores<ApplicationDbContext>()
-        .AddDefaultTokenProviders();
+        services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(serviceProvider =>
+            new ConfigureNamedOptions<JwtBearerOptions>(
+                JwtBearerDefaults.AuthenticationScheme,
+                options => ConfigureJwtBearerOptions(options, serviceProvider)));
 
+        return services;
+    }
+
+    private static void ConfigureIdentityOptions(IdentityOptions options)
+    {
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = true;
+        options.Password.RequiredLength = 8;
+        options.Password.RequiredUniqueChars = 1;
+
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
+
+        options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = true;
+    }
+
+    private static void ConfigureAuthenticationOptions(AuthenticationOptions options)
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }
+
+    private static IServiceCollection AddApplicationSettings(this IServiceCollection services, IConfiguration configuration)
+    {
         services.Configure<JwtSettings>(configuration.GetSection("jwtSettings"));
         services.Configure<EmailSettings>(configuration.GetSection("emailSettings"));
         services.Configure<DatabaseTablesSettings>(configuration.GetSection("DatabaseTables"));
@@ -169,68 +215,51 @@ public static class ServiceRegistration
         services.AddSingleton(serviceProvider => 
             serviceProvider.GetRequiredService<IOptions<GoogleAuthSettings>>().Value);
 
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer();
-
-        services.AddSingleton<IConfigureOptions<JwtBearerOptions>>(serviceProvider =>
-        {
-            return new ConfigureNamedOptions<JwtBearerOptions>(
-                JwtBearerDefaults.AuthenticationScheme,
-                options =>
-                {
-                    var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
-
-                    if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
-                    {
-                        throw new InvalidOperationException("JWT Secret is not configured. Please set jwtSettings:Secret in appsettings.json");
-                    }
-
-                    options.RequireHttpsMetadata = false;
-                    options.SaveToken = true;
-
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = jwtSettings.ValidateIssuer,
-                        ValidIssuers = !string.IsNullOrWhiteSpace(jwtSettings.Issuer)
-                            ? new[] { jwtSettings.Issuer }
-                            : null,
-
-                        ValidateAudience = jwtSettings.ValidateAudience,
-                        ValidAudience = jwtSettings.Audience,
-
-                        ValidateLifetime = jwtSettings.ValidateLifeTime,
-
-                        ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
-
-                        ClockSkew = TimeSpan.Zero,
-                        RequireExpirationTime = true,
-                        RequireSignedTokens = true,
-                    };
-
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnAuthenticationFailed = context =>
-                        {
-                            return Task.CompletedTask;
-                        },
-                        OnTokenValidated = context =>
-                        {
-                            return Task.CompletedTask;
-                        },
-                        OnChallenge = context =>
-                        {
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
-        });
-
         return services;
+    }
+
+    private static void ConfigureJwtBearerOptions(JwtBearerOptions options, IServiceProvider serviceProvider)
+    {
+        var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
+
+        if (string.IsNullOrWhiteSpace(jwtSettings.Secret))
+        {
+            throw new InvalidOperationException("JWT Secret is not configured. Please set jwtSettings:Secret in appsettings.json");
+        }
+
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+        options.TokenValidationParameters = CreateTokenValidationParameters(jwtSettings);
+        options.Events = CreateJwtBearerEvents();
+    }
+
+    private static TokenValidationParameters CreateTokenValidationParameters(JwtSettings jwtSettings)
+    {
+        return new TokenValidationParameters
+        {
+            ValidateIssuer = jwtSettings.ValidateIssuer,
+            ValidIssuers = !string.IsNullOrWhiteSpace(jwtSettings.Issuer)
+                ? new[] { jwtSettings.Issuer }
+                : null,
+            ValidateAudience = jwtSettings.ValidateAudience,
+            ValidAudience = jwtSettings.Audience,
+            ValidateLifetime = jwtSettings.ValidateLifeTime,
+            ValidateIssuerSigningKey = jwtSettings.ValidateIssuerSigningKey,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Secret)),
+            ClockSkew = TimeSpan.Zero,
+            RequireExpirationTime = true,
+            RequireSignedTokens = true,
+        };
+    }
+
+    private static JwtBearerEvents CreateJwtBearerEvents()
+    {
+        return new JwtBearerEvents
+        {
+            OnAuthenticationFailed = _ => Task.CompletedTask,
+            OnTokenValidated = _ => Task.CompletedTask,
+            OnChallenge = _ => Task.CompletedTask
+        };
     }
 
     private static IServiceCollection AddSwaggerGeneration(this IServiceCollection services, IConfiguration configuration)
@@ -246,81 +275,35 @@ public static class ServiceRegistration
             });
 
             options.EnableAnnotations();
-
-            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
-            {
-                Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer 12345abcdef'",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.Http,
-                Scheme = JwtBearerDefaults.AuthenticationScheme,
-                BearerFormat = "JWT"
-            });
-
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = JwtBearerDefaults.AuthenticationScheme
-                        }
-                    },
-                    Array.Empty<string>()
-                }
-            });
-
-            options.MapType<TimeOnly>(() => new OpenApiSchema
-            {
-                Type = "string",
-                Format = "time",
-                Example = new OpenApiString("14:30:00")
-            });
-
-            options.MapType<TimeOnly?>(() => new OpenApiSchema
-            {
-                Type = "string",
-                Format = "time",
-                Nullable = true,
-                Example = new OpenApiString("14:30:00")
-            });
+            options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, CreateJwtSecurityScheme());
         });
 
         return services;
     }
 
+    private static OpenApiSecurityScheme CreateJwtSecurityScheme()
+    {
+        return new OpenApiSecurityScheme
+        {
+            Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer 12345abcdef'",
+            Name = "Authorization",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.Http,
+            Scheme = JwtBearerDefaults.AuthenticationScheme,
+            BearerFormat = "JWT"
+        };
+    }
+
     private static IServiceCollection AddAuthorizationPolicies(this IServiceCollection services)
     {
-        var claimTypes = new[]
-        {
-            "Edit Customer",
-            "Get Customer",
-            "Get All Customer",
-            "Delete Customer",
-            "Create Admin",
-            "Edit Admin",
-            "Get Admin",
-            "Get All Admin",
-            "Delete Admin",
-            "Create Employee",
-            "Edit Employee",
-            "Get Employee",
-            "Get All Employee",
-            "Delete Employee"
-        };
-
         var authorizationBuilder = services.AddAuthorizationBuilder();
+        var permissions = Permissions.GetAll();
 
-        foreach (var claimType in claimTypes)
+        foreach (var permission in permissions)
         {
-            var policyName = claimType.Replace(" ", string.Empty);
-
-            authorizationBuilder.AddPolicy(policyName, policy =>
-            {
-                policy.RequireClaim(claimType, "True");
-            });
+            var policyName = permission.Replace(".", string.Empty);
+            authorizationBuilder.AddPolicy(policyName, policy => 
+                policy.RequireClaim(permission, "True"));
         }
 
         return services;

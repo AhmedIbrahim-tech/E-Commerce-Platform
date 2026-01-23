@@ -28,7 +28,7 @@ public class SetDeliveryMethodCommandHandler(IUnitOfWork unitOfWork) : ApiRespon
 
         try
         {
-            await unitOfWork.Orders.UpdateAsync(order);
+            await unitOfWork.Orders.UpdateAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
             return Success("");
         }

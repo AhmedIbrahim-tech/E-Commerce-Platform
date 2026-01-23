@@ -27,7 +27,7 @@ public class EditShippingAddressCommandHandler : ApiResponseHandler,
 
         try
         {
-            await _unitOfWork.ShippingAddresses.UpdateAsync(shippingAddress);
+            await _unitOfWork.ShippingAddresses.UpdateAsync(shippingAddress, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             return Edit("");
         }

@@ -4,31 +4,29 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 {
     public void Configure(EntityTypeBuilder<Payment> builder)
     {
-        builder.ToTable("payments");
-
         builder.HasKey(p => p.Id);
 
         builder.Property(p => p.Id)
-            .ValueGeneratedNever()
-            .ConfigureGuid("id", isRequired: true);
+            .ValueGeneratedOnAdd()
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(p => p.OrderId)
-            .ConfigureGuid("order_id", isRequired: true);
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(p => p.TransactionId)
-            .ConfigureString("transaction_id", 200, isRequired: false);
+            .ConfigureString(200, isRequired: false);
 
         builder.Property(p => p.PaymentDate)
-            .ConfigureTimestamp("payment_date", hasDefaultValue: false, isRequired: false);
+            .ConfigureTimestamp(hasDefaultValue: false, isRequired: false);
 
         builder.Property(p => p.PaymentMethod)
-            .ConfigureEnum("payment_method", isRequired: true);
+            .ConfigureEnum(isRequired: true);
 
         builder.Property(p => p.TotalAmount)
-            .ConfigureDecimal("total_amount", precision: 18, scale: 2, isRequired: false);
+            .ConfigureDecimal(precision: 18, scale: 2, isRequired: false);
 
         builder.Property(p => p.Status)
-            .ConfigureEnum("status", isRequired: true);
+            .ConfigureEnum(isRequired: true);
 
         // Indexes for performance
         builder.HasIndex(p => p.OrderId)

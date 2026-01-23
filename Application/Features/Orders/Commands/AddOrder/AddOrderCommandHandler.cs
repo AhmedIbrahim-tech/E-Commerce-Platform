@@ -1,5 +1,5 @@
 using Application.Common.Bases;
-using Domain.Entities;
+using Domain.Entities.Cart;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -11,6 +11,7 @@ public class AddOrderCommandHandler(
     IUnitOfWork unitOfWork,
     IMemoryCache memoryCache,
     ICurrentUserService currentUserService,
+    INotificationService notificationService,
     IHttpContextAccessor httpContextAccessor) : ApiResponseHandler(),
     IRequestHandler<AddOrderCommand, Guid>
 {
@@ -28,7 +29,7 @@ public class AddOrderCommandHandler(
 
         if (existingCart is not null)
         {
-            cart.CreatedAt = cart.CreatedAt == default ? existingCart.CreatedAt : DateTimeOffset.UtcNow.ToLocalTime();
+            cart.CreatedTime = cart.CreatedTime == default ? existingCart.CreatedTime : DateTimeOffset.UtcNow.ToLocalTime();
             cart.CustomerId = cart.CustomerId == Guid.Empty ? existingCart.CustomerId : cart.CustomerId;
             cart.CartItems = cart.CartItems ?? existingCart.CartItems;
             cart.TotalAmount = cart.TotalAmount ?? existingCart.TotalAmount;
@@ -101,6 +102,7 @@ public class AddOrderCommandHandler(
             throw new InvalidOperationException("Cart not found or empty");
 
         var order = new Order();
+        var possibleMerchantAppUserIds = new HashSet<Guid>();
 
         // Validate and process each cart item
         foreach (var item in cart.CartItems!)
@@ -113,29 +115,60 @@ public class AddOrderCommandHandler(
             if (product == null)
                 throw new InvalidOperationException($"Product with ID {item.ProductId} does not exist.");
 
-            if (product.Price == null || product.StockQuantity < item.Quantity)
+            if (product.CreatedBy != Guid.Empty)
+                possibleMerchantAppUserIds.Add(product.CreatedBy);
+
+            var quantity = item.Quantity ?? 0;
+            if (quantity <= 0 || product.StockQuantity < quantity)
                 throw new InvalidOperationException($"Product {product.Name} is not available or stock is insufficient.");
 
             order.OrderItems.Add(new OrderItem
             {
                 ProductId = item.ProductId,
                 OrderId = order.Id,
-                Quantity = item.Quantity,
+                Quantity = quantity,
                 UnitPrice = product.Price,
-                SubAmount = item.Quantity * (product.Price ?? 0)
+                SubAmount = quantity * product.Price
             });
         }
 
         order.CustomerId = cart.CustomerId;
         order.OrderDate = DateTimeOffset.UtcNow.ToLocalTime();
-        order.TotalAmount = order.OrderItems.Sum(i => i.SubAmount);
+        order.TotalAmount = order.OrderItems.Sum(i => i.SubAmount ?? 0);
         order.Status = Status.Draft;
 
         // Add Order and return result
         try
         {
-            await unitOfWork.Orders.AddAsync(order);
+            await unitOfWork.Orders.AddAsync(order, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
+
+            var merchantIds = await unitOfWork.Context.Vendors.AsNoTracking()
+                .Where(v => possibleMerchantAppUserIds.Contains(v.AppUserId))
+                .Select(v => v.AppUserId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            var adminIds = await unitOfWork.Context.Vendors.AsNoTracking()
+                .Where(v => merchantIds.Contains(v.AppUserId))
+                .Select(v => v.CreatedBy)
+                .Distinct()
+                .Join(
+                    unitOfWork.Context.Admins.AsNoTracking(),
+                    createdBy => createdBy,
+                    admin => admin.AppUserId,
+                    (createdBy, admin) => admin.AppUserId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            await notificationService.CreateAsync(
+                "new_order",
+                new { orderId = order.Id, totalAmount = order.TotalAmount, status = order.Status.ToString() },
+                new NotificationRecipients(
+                    AdminIds: adminIds,
+                    MerchantIds: merchantIds),
+                cancellationToken);
+
             return order.Id;
         }
         catch (Exception)

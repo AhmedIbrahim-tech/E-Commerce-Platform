@@ -1,34 +1,34 @@
+using Domain.Entities.Reviews;
+
 namespace Infrastructure.Data.Configurations;
 
 public class ReviewConfiguration : IEntityTypeConfiguration<Review>
 {
     public void Configure(EntityTypeBuilder<Review> builder)
     {
-        builder.ToTable("reviews");
-
         // Composite primary key
         builder.HasKey(r => new { r.CustomerId, r.ProductId });
 
         builder.Property(r => r.CustomerId)
-            .ConfigureGuid("customer_id", isRequired: true);
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(r => r.ProductId)
-            .ConfigureGuid("product_id", isRequired: true);
+            .ConfigureGuid(isRequired: true);
 
         builder.Property(r => r.Rating)
-            .ConfigureEnum("rating", isRequired: true);
+            .ConfigureEnum(isRequired: true);
 
         builder.Property(r => r.Comment)
-            .ConfigureString("comment", 400, isRequired: false);
+            .ConfigureString(400, isRequired: false);
 
-        builder.Property(r => r.CreatedAt)
-            .ConfigureTimestamp("created_at", hasDefaultValue: true, isRequired: true);
+        builder.Property(r => r.CreatedTime)
+            .ConfigureTimestamp(hasDefaultValue: true, isRequired: true);
 
         // Foreign key relationships
-        builder.HasOne(r => r.Customer)
-            .WithMany(c => c.Reviews)
-            .HasForeignKey(r => r.CustomerId)
-            .OnDelete(DeleteBehavior.Cascade);
+        //builder.HasOne(r => r.Customer)
+        //    .WithMany(c => c.Reviews)
+        //    .HasForeignKey(r => r.CustomerId)
+        //    .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.Product)
             .WithMany(p => p.Reviews)

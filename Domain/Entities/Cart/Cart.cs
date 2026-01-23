@@ -1,0 +1,17 @@
+namespace Domain.Entities.Cart;
+
+public class Cart
+{
+    public Guid CustomerId { get; set; }
+    public DateTimeOffset? CreatedTime { get; set; }
+    public string? PaymentToken { get; set; }
+    public string? PaymentIntentId { get; set; }
+    public decimal? TotalAmount { get; set; }
+
+    public ICollection<CartItem> CartItems { get; set; }
+
+    public Cart()
+    {
+        CartItems = new HashSet<CartItem>();
+    }
+}

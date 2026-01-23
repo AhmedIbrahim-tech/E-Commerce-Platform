@@ -1,0 +1,187 @@
+// BreadCrumb Component Enhanced Styles
+// These styles enhance the existing Bootstrap breadcrumb classes
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0;
+  margin-bottom: 1rem;
+  list-style: none;
+  align-items: center;
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  // Breadcrumb Item
+  &-item {
+    display: flex;
+    align-items: center;
+    color: var(--vz-gray-600, #878a99);
+    transition: color 0.2s ease-in-out;
+
+    // Spacing between items
+    + .breadcrumb-item {
+      padding-left: 0.75rem;
+
+      // Divider/separator - enhanced styling
+      &::before {
+        content: var(--vz-breadcrumb-divider, "\f0142");
+        float: left;
+        padding-right: 0.75rem;
+        color: var(--vz-gray-500, #adb5bd);
+        font-family: "Material Design Icons";
+        font-size: 0.9375rem;
+        line-height: 1.25rem;
+        font-weight: 400;
+        transition: color 0.2s ease-in-out;
+        vertical-align: middle;
+      }
+    }
+
+    // Active state
+    &.active {
+      color: var(--vz-gray-700, #495057);
+      font-weight: 500;
+    }
+
+    // Link styling
+    > a {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      color: var(--vz-gray-700, #495057);
+      text-decoration: none;
+      transition: all 0.2s ease-in-out;
+
+      &:hover {
+        color: var(--vz-primary, #3d78e3);
+        text-decoration: none;
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--vz-primary, #3d78e3);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+      }
+    }
+
+    // Icon styling
+    i {
+      font-size: 1rem;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: inherit;
+      opacity: 0.85;
+      transition: all 0.2s ease-in-out;
+      vertical-align: middle;
+    }
+
+    // Icon hover effect on links
+    > a:hover i {
+      opacity: 1;
+      color: var(--vz-primary, #3d78e3);
+      transform: scale(1.05);
+    }
+
+    // Active item icon
+    &.active i {
+      opacity: 1;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 576px) {
+    font-size: 0.8125rem;
+    margin-bottom: 0.75rem;
+
+    &-item {
+      + .breadcrumb-item {
+        padding-left: 0.5rem;
+
+        &::before {
+          padding-right: 0.5rem;
+          font-size: 0.875rem;
+        }
+      }
+
+      i {
+        font-size: 0.9375rem;
+      }
+    }
+  }
+
+  // Dark mode support
+  @media (prefers-color-scheme: dark) {
+    &-item {
+      color: var(--vz-gray-400, #ced4da);
+
+      &.active {
+        color: var(--vz-gray-200, #e9ecef);
+      }
+
+      > a {
+        color: var(--vz-gray-300, #dee2e6);
+
+        &:hover {
+          color: var(--vz-primary, #3d78e3);
+        }
+      }
+    }
+  }
+
+  // Compact variant
+  &.breadcrumb-compact {
+    margin-bottom: 0.5rem;
+    font-size: 0.8125rem;
+
+    .breadcrumb-item {
+      + .breadcrumb-item {
+        padding-left: 0.5rem;
+
+        &::before {
+          padding-right: 0.5rem;
+          font-size: 0.875rem;
+        }
+      }
+
+      i {
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  // Large variant
+  &.breadcrumb-lg {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+
+    .breadcrumb-item {
+      + .breadcrumb-item {
+        padding-left: 1rem;
+
+        &::before {
+          padding-right: 1rem;
+          font-size: 1.125rem;
+        }
+      }
+
+      i {
+        font-size: 1.125rem;
+      }
+    }
+  }
+
+  // No divider variant
+  &.breadcrumb-no-divider {
+    .breadcrumb-item {
+      + .breadcrumb-item {
+        &::before {
+          display: none;
+        }
+
+        padding-left: 0.5rem;
+      }
+    }
+  }
+}

@@ -1,4 +1,8 @@
 using Application.ServicesHandlers.Services;
+using Infrastructure.Data.Authorization;
+using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Application.Features.ApplicationUser.Commands.AddCustomer;
@@ -6,7 +10,7 @@ namespace Application.Features.ApplicationUser.Commands.AddCustomer;
 internal class AddCustomerCommandHandler(
     UserManager<AppUser> userManager,
     IHttpContextAccessor httpContextAccessor,
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IUrlHelper urlHelper,
     IDefaultClaimsService defaultClaimsService,
     INotificationService notificationService,
@@ -23,35 +27,22 @@ internal class AddCustomerCommandHandler(
         };
 
         appUser.Id = Guid.NewGuid();
-        if (request.ProfileImage != null)
-        {
-            var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
-                new[] { request.ProfileImage },
-                FileLocations.Users,
-                appUser.Id,
-                childFolder: null,
-                overwrite: true,
-                cancellationToken: cancellationToken);
 
-            if (profileImageUrls.Count > 0)
-                appUser.ProfileImage = profileImageUrls[0];
-        }
-
-        using var trans = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var trans = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
             var userEmailIsExistResult = await userManager.FindByEmailAsync(appUser.Email!);
             if (userEmailIsExistResult != null)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(UserErrors.DuplicatedEmail());
             }
 
             var userByUserName = await userManager.FindByNameAsync(appUser.UserName!);
             if (userByUserName != null)
             {
-                await trans.RollbackAsync(cancellationToken);
-                return new ApiResponse<string>(UserErrors.DuplicatedEmail());
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return new ApiResponse<string>(UserErrors.DuplicatedUserName());
             }
 
             appUser.EmailConfirmed = true;
@@ -59,21 +50,21 @@ internal class AddCustomerCommandHandler(
             var createResult = await userManager.CreateAsync(appUser, request.Password);
             if (!createResult.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
             }
 
             var addToRoleResult = await userManager.AddToRoleAsync(appUser, Roles.Customer);
             if (!addToRoleResult.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(RoleErrors.InvalidPermissions());
             }
 
             var addDefaultClaimsResult = await defaultClaimsService.AssignDefaultClaimsAsync(appUser, Roles.Customer);
             if (!addDefaultClaimsResult.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(PermissionErrors.PermissionNotAssigned());
             }
 
@@ -99,8 +90,8 @@ internal class AddCustomerCommandHandler(
                 customer.ChangeSecondPhoneNumber(request.SecondPhoneNumber, appUser.Id);
             }
 
-            await dbContext.Customers.AddAsync(customer, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Customers.AddAsync(customer, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             await notificationService.CreateAsync(
                 "new_user",
@@ -108,12 +99,12 @@ internal class AddCustomerCommandHandler(
                 new NotificationRecipients(),
                 cancellationToken);
 
-            await trans.CommitAsync(cancellationToken);
+            await unitOfWork.CommitTransactionAsync(cancellationToken);
             return Created("");
         }
         catch (Exception)
         {
-            await trans.RollbackAsync(cancellationToken);
+            await unitOfWork.RollbackTransactionAsync(cancellationToken);
             return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
         }
     }

@@ -1,10 +1,20 @@
+using Application.Common.Bases;
+using Application.Common.Errors;
+using Application.Common.Helpers;
+using Application.ServicesHandlers.Auth;
+using Application.ServicesHandlers.Services;
+using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+
 namespace Application.Features.Authentication.Commands.SignIn;
 
 public class SignInCommandHandler(
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
     IAuthenticationService authenticationService,
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IAuditService auditService) : ApiResponseHandler(), 
     IRequestHandler<SignInCommand, ApiResponse<JwtAuthResponse>>
 {
@@ -78,12 +88,16 @@ public class SignInCommandHandler(
             return new ApiResponse<JwtAuthResponse>(UserErrors.InvalidCredentials());
         }
 
-        var isDeleted = await dbContext.Customers
-            .AnyAsync(c => c.AppUserId == user.Id && c.IsDeleted, cancellationToken) ||
-            await dbContext.Vendors
-            .AnyAsync(v => v.AppUserId == user.Id && v.IsDeleted, cancellationToken) ||
-            await dbContext.Admins
-            .AnyAsync(a => a.AppUserId == user.Id && a.IsDeleted, cancellationToken);
+        var isDeleted = await (from c in unitOfWork.Customers.GetTableNoTracking()
+                                where c.AppUserId == user.Id && c.IsDeleted
+                                select true)
+                                .Union(from v in unitOfWork.Vendors.GetTableNoTracking()
+                                       where v.AppUserId == user.Id && v.IsDeleted
+                                       select true)
+                                .Union(from a in unitOfWork.Admins.GetTableNoTracking()
+                                       where a.AppUserId == user.Id && a.IsDeleted
+                                       select true)
+                                .AnyAsync(cancellationToken);
 
         if (isDeleted)
         {

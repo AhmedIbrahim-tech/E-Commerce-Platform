@@ -19,6 +19,7 @@ namespace Domain.AppMetaData
             public const string ConfirmResetPasswordCode = Prefix + "confirmResetPasswordCode";
             public const string ResetPassword = Prefix + "resetPassword";
             public const string ConfirmEmail = "api/authenticate/confirmEmail";
+            public const string TwoStepVerification = Prefix + "twoStepVerification";
             public const string Logout = Prefix + "logout";
             public const string LogoutAll = Prefix + "logoutAll";
         }
@@ -235,7 +236,7 @@ namespace Domain.AppMetaData
             public const string Create = Prefix + "create";
             public const string Edit = Prefix + "edit";
             public const string Delete = Prefix + SingleRoute;
-            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
+            public const string ToggleStatus = Prefix + "toggleStatus";
         }
 
         public static class AdminRouting
@@ -246,7 +247,7 @@ namespace Domain.AppMetaData
             public const string Create = Prefix + "create";
             public const string Edit = Prefix + "edit";
             public const string Delete = Prefix + SingleRoute;
-            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
+            public const string ToggleStatus = Prefix + "toggleStatus";
         }
 
         public static class EmployeeRouting

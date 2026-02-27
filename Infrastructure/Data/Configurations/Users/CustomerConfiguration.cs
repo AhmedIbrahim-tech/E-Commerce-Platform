@@ -48,25 +48,14 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.DeletedBy)
             .ConfigureGuid(isRequired: false);
 
-        // Foreign key relationships
-        // builder.HasMany(c => c.Orders)
-        //     .WithOne(o => o.Customer)
-        //     .HasForeignKey(o => o.CustomerId)
-        //     .OnDelete(DeleteBehavior.Restrict);
-
-        // builder.HasMany(c => c.ShippingAddresses)
-        //     .WithOne(sa => sa.Customer)
-        //     .HasForeignKey(sa => sa.CustomerId)
-        //     .OnDelete(DeleteBehavior.Cascade);
-
-        // builder.HasMany(c => c.Reviews)
-        //     .WithOne(r => r.Customer)
-        //     .HasForeignKey(r => r.CustomerId)
-        //     .OnDelete(DeleteBehavior.Cascade);
-
-        // Index for AppUserId lookup
         builder.HasIndex(c => c.AppUserId)
             .HasDatabaseName("ix_customers_app_user_id")
             .IsUnique();
+
+        builder.HasIndex(c => c.FullName)
+            .HasDatabaseName("ix_customers_full_name");
+
+        builder.HasIndex(c => c.CreatedTime)
+            .HasDatabaseName("ix_customers_created_time");
     }
 }

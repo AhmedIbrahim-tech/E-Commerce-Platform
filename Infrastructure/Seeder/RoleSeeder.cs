@@ -13,6 +13,7 @@ public static class RoleSeeder
             await roleManager.CreateAsync(new AppRole() { Name = Roles.Admin });
             await roleManager.CreateAsync(new AppRole() { Name = Roles.Customer });
             await roleManager.CreateAsync(new AppRole() { Name = Roles.Merchant });
+            await roleManager.CreateAsync(new AppRole() { Name = Roles.StaffMerchant });
         }
     }
 }

@@ -1,10 +1,17 @@
+using Domain.Common.Interfaces;
+using Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+
 namespace Infrastructure.RepositoriesHandlers.Bases;
 
 public interface IGenericRepositoryAsync<T> where T : class
 {
     // Query Operations
     Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<T?>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<T?> GetByIdAsync(Guid id, bool includeDeleted, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<int> CountAsync(CancellationToken cancellationToken = default);
     IQueryable<T> GetTableNoTracking();
     IQueryable<T> GetTableAsTracking();
 
@@ -20,12 +27,15 @@ public interface IGenericRepositoryAsync<T> where T : class
     Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
     Task DeleteRangeAsync(ICollection<T> entities, CancellationToken cancellationToken = default);
 
-    // Transaction Operations
-    Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
-
     // Utility Operations
-    Task SaveChangesAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Saves all changes made in this context to the database.
+    /// NOTE: Prefer using IUnitOfWork.SaveChangesAsync() for better transaction management.
+    /// This method is available for special cases where direct repository access is needed (e.g., RefreshTokenRepository).
+    /// </summary>
+    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     void AttachEntity<TEntity>(TEntity entity) where TEntity : class;
+    void AttachEntity<TEntity>(TEntity entity, EntityState state) where TEntity : class;
 }
 
 public class GenericRepositoryAsync<T>(ApplicationDbContext dbContext) : IGenericRepositoryAsync<T> where T : class
@@ -36,12 +46,38 @@ public class GenericRepositoryAsync<T>(ApplicationDbContext dbContext) : IGeneri
 
     public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<T>().FindAsync(new object[] { id }, cancellationToken);
+        return await GetByIdAsync(id, includeDeleted: false, cancellationToken);
     }
 
-    public virtual async Task<IReadOnlyList<T?>> GetAllAsync(CancellationToken cancellationToken = default)
+    public virtual async Task<T?> GetByIdAsync(Guid id, bool includeDeleted, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Set<T>().AsNoTracking().ToListAsync(cancellationToken);
+        var query = _dbContext.Set<T>().AsQueryable();
+
+        if (includeDeleted && typeof(ISoftDelete).IsAssignableFrom(typeof(T)))
+        {
+            query = query.IgnoreQueryFilters();
+        }
+
+        return await query.FirstOrDefaultAsync(GetIdPredicate(id), cancellationToken);
+    }
+
+    public virtual async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<T>()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
+    public virtual async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<T>()
+            .AnyAsync(GetIdPredicate(id), cancellationToken);
+    }
+
+    public virtual async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Set<T>()
+            .CountAsync(cancellationToken);
     }
 
     public IQueryable<T> GetTableNoTracking()
@@ -80,72 +116,82 @@ public class GenericRepositoryAsync<T>(ApplicationDbContext dbContext) : IGeneri
 
     #region Update Operations
 
-    public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         _dbContext.Set<T>().Update(entity);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public virtual async Task UpdateRangeAsync(ICollection<T> entities, CancellationToken cancellationToken = default)
+    public virtual Task UpdateRangeAsync(ICollection<T> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
         
         if (entities.Count == 0)
-            return;
+            return Task.CompletedTask;
 
         _dbContext.Set<T>().UpdateRange(entities);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     #endregion
 
     #region Delete Operations
 
-    public virtual async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
         _dbContext.Set<T>().Remove(entity);
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public virtual async Task DeleteRangeAsync(ICollection<T> entities, CancellationToken cancellationToken = default)
+    public virtual Task DeleteRangeAsync(ICollection<T> entities, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
         
         if (entities.Count == 0)
-            return;
+            return Task.CompletedTask;
 
         _dbContext.Set<T>().RemoveRange(entities);
-        await Task.CompletedTask;
-    }
-
-    #endregion
-
-    #region Transaction Operations
-
-    public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
-    {
-        return await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
     #endregion
 
     #region Utility Operations
 
-    public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        return await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public void AttachEntity<TEntity>(TEntity entity) where TEntity : class
     {
         ArgumentNullException.ThrowIfNull(entity);
+        AttachEntity(entity, EntityState.Unchanged);
+    }
+
+    public void AttachEntity<TEntity>(TEntity entity, EntityState state) where TEntity : class
+    {
+        ArgumentNullException.ThrowIfNull(entity);
 
         _dbContext.Set<TEntity>().Attach(entity);
-        _dbContext.Entry(entity).State = EntityState.Unchanged;
+        _dbContext.Entry(entity).State = state;
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    protected virtual System.Linq.Expressions.Expression<Func<T, bool>> GetIdPredicate(Guid id)
+    {
+        var parameter = System.Linq.Expressions.Expression.Parameter(typeof(T), "e");
+        var property = System.Linq.Expressions.Expression.Property(parameter, "Id");
+        var constant = System.Linq.Expressions.Expression.Constant(id);
+        var equality = System.Linq.Expressions.Expression.Equal(property, constant);
+        return System.Linq.Expressions.Expression.Lambda<Func<T, bool>>(equality, parameter);
     }
 
     #endregion

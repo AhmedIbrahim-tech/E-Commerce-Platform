@@ -89,7 +89,8 @@ public class LookUpsService(IUnitOfWork unitOfWork) : ILookUpsService
         {
             new RoleLookupDto { Name = "SuperAdmin", DisplayName = "Super Admin" },
             new RoleLookupDto { Name = "Admin", DisplayName = "Admin" },
-            new RoleLookupDto { Name = "Vendor", DisplayName = "Vendor" },
+            new RoleLookupDto { Name = "Merchant", DisplayName = "Merchant" },
+            new RoleLookupDto { Name = "StaffMerchant", DisplayName = "Staff Merchant" },
             new RoleLookupDto { Name = "Customer", DisplayName = "Customer" }
         };
     }

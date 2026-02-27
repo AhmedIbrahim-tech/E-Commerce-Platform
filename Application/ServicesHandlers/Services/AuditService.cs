@@ -1,3 +1,6 @@
+using Domain.Entities.AuditLogs;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+
 namespace Application.ServicesHandlers.Services;
 
 public interface IAuditService
@@ -7,18 +10,18 @@ public interface IAuditService
 
 public class AuditService : IAuditService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public AuditService(ApplicationDbContext dbContext)
+    public AuditService(IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task LogEventAsync(string eventType, string eventName, string? description = null, Guid? userId = null, string? userEmail = null, string? additionalData = null, CancellationToken cancellationToken = default)
     {
         try
         {
-            var auditLog = new Domain.Entities.AuditLogs.AuditLog(
+            var auditLog = new AuditLog(
                 eventType: eventType,
                 eventName: eventName,
                 description: description,
@@ -27,13 +30,11 @@ public class AuditService : IAuditService
                 additionalData: additionalData
             );
 
-            await _dbContext.AuditLogs.AddAsync(auditLog, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.AuditLogs.AddAsync(auditLog, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
         catch
         {
-            // Silently fail to prevent audit logging from breaking the main flow
-            // In production, consider logging to a separate system or queue
         }
     }
 }

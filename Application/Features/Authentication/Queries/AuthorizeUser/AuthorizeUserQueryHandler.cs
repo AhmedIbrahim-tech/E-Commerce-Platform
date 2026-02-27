@@ -16,9 +16,9 @@ public class AuthorizeUserQueryHandler : ApiResponseHandler,
 
     public async Task<ApiResponse<string>> Handle(AuthorizeUserQuery request, CancellationToken cancellationToken)
     {
-        var result = await _authenticationService.ValidateToken(request.AccessToken);
-        if (result == "Not Expired.")
-            return Success(result);
+        var (isValid, message) = await _authenticationService.ValidateToken(request.AccessToken);
+        if (isValid)
+            return Success(message);
         return new ApiResponse<string>(UserErrors.InvalidJwtToken());
     }
 }

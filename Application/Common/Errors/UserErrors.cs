@@ -113,4 +113,14 @@ public static class UserErrors
             Message = "Invalid roles"
         };
     }
+
+    public static ApiResponse DuplicatedUserName()
+    {
+        return new ApiResponse
+        {
+            StatusCode = HttpStatusCode.Conflict,
+            Succeeded = false,
+            Message = "Another user with the same username already exists"
+        };
+    }
 }

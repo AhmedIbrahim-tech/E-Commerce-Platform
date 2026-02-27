@@ -50,8 +50,7 @@ public class GetMyProfileQueryHandler(
                              .Select(o => (decimal?)o.TotalAmount)
                              .SumAsync(cancellationToken) ?? 0m;
 
-        var recentAuditLogs = await unitOfWork.Context.AuditLogs
-            .AsNoTracking()
+        var recentAuditLogs = await unitOfWork.AuditLogs.GetTableNoTracking()
             .Where(l => l.UserId == user.Id)
             .OrderByDescending(l => l.CreatedTime)
             .Take(10)

@@ -8,8 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add application services
 builder.Services.AddApplicationServices(builder.Configuration);
 
-// Configure CORS
-builder.Services.AddApplicationCors();
+builder.Services.AddApplicationCors(builder.Configuration);
 
 var app = builder.Build();
 

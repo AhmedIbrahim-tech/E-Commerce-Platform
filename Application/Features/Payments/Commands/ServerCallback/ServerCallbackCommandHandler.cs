@@ -7,7 +7,6 @@ public class ServerCallbackCommandHandler(
     PaymobSettings paymobSettings,
     IMemoryCache memoryCache,
     IEmailService emailService,
-    ApplicationDbContext dbContext,
     UserManager<AppUser> userManager) : ApiResponseHandler(),
     IRequestHandler<ServerCallbackCommand, ApiResponse<string>>
 {
@@ -189,7 +188,7 @@ public class ServerCallbackCommandHandler(
                     return "FailedToDeleteCartAfterOrderSuccess";
                 }
 
-                var customerForEmail = await dbContext.Customers
+                var customerForEmail = await unitOfWork.Customers.GetTableNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == order.CustomerId, cancellationToken);
                 if (customerForEmail != null)
                 {

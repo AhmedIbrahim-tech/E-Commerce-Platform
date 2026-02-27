@@ -3,16 +3,16 @@ using Application.Common.Errors;
 using Application.ServicesHandlers.Auth;
 using Application.ServicesHandlers.Services;
 using Domain.Entities.Users;
-using Infrastructure.Data;
 using Infrastructure.Data.Authorization;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Features.ApplicationUser.Commands.AddAdmin;
 
 internal class AddAdminCommandHandler(
     UserManager<AppUser> userManager,
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IUserCreationService userCreationService,
     IFileUploadService fileUploadService,
@@ -26,7 +26,7 @@ internal class AddAdminCommandHandler(
         {
             Email = request.Email,
             PhoneNumber = request.PhoneNumber,
-            EmailConfirmed = true // Admin users are created by other admins, so email is trusted
+            EmailConfirmed = true
         };
 
         appUser.Id = Guid.NewGuid();
@@ -44,49 +44,41 @@ internal class AddAdminCommandHandler(
                 appUser.ProfileImage = profileImageUrls[0];
         }
 
-        using var trans = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var trans = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            // Validate email and username uniqueness
             var userEmailIsExistResult = await userManager.FindByEmailAsync(appUser.Email!);
             if (userEmailIsExistResult != null)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(UserErrors.DuplicatedEmail());
             }
 
             var userByUserName = await userManager.FindByNameAsync(appUser.UserName!);
             if (userByUserName != null)
             {
-                await trans.RollbackAsync(cancellationToken);
-                return new ApiResponse<string>(UserErrors.DuplicatedEmail());
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return new ApiResponse<string>(UserErrors.DuplicatedUserName());
             }
 
-            // Get creator ID and validate permissions
             var creatorId = currentUserService.GetUserId();
             
-            // Determine target role based on creator (server-side only)
-            // SuperAdmin can create SuperAdmin or Admin
-            // Admin can only create Admin (NOT SuperAdmin)
             var creatorRoles = await userManager.GetRolesAsync(await userManager.FindByIdAsync(creatorId.ToString())!);
             var creatorRole = creatorRoles.FirstOrDefault();
             
-            string targetRole = Roles.Admin; // Default to Admin
+            string targetRole = Roles.Admin;
             if (creatorRole == Roles.SuperAdmin)
             {
-                // For now, SuperAdmin creates Admin. Can be extended to allow SuperAdmin creation
                 targetRole = Roles.Admin;
             }
 
-            // Validate creator can create this role
             var roleValidation = await userCreationService.ValidateRoleAssignmentAsync(creatorId, targetRole);
             if (!roleValidation.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return roleValidation;
             }
 
-            // Create user with role and default claims
             var createResult = await userCreationService.CreateUserWithRoleAsync(
                 appUser,
                 request.Password!,
@@ -95,11 +87,10 @@ internal class AddAdminCommandHandler(
 
             if (!createResult.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
             }
 
-            // Create Admin profile
             var admin = new Admin(
                 appUserId: appUser.Id,
                 fullName: fullName,
@@ -118,8 +109,8 @@ internal class AddAdminCommandHandler(
                 admin.ChangeSecondPhoneNumber(request.SecondPhoneNumber, creatorId);
             }
 
-            await dbContext.Admins.AddAsync(admin, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Admins.AddAsync(admin, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             await notificationService.CreateAsync(
                 "new_user",
@@ -128,12 +119,12 @@ internal class AddAdminCommandHandler(
                     AdminIds: creatorRole == Roles.Admin ? new[] { creatorId } : null),
                 cancellationToken);
 
-            await trans.CommitAsync(cancellationToken);
+            await unitOfWork.CommitTransactionAsync(cancellationToken);
             return Created("");
         }
         catch (Exception)
         {
-            await trans.RollbackAsync(cancellationToken);
+            await unitOfWork.RollbackTransactionAsync(cancellationToken);
             return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
         }
     }

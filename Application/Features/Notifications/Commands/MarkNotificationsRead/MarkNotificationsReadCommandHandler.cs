@@ -69,7 +69,7 @@ public class MarkNotificationsReadCommandHandler(
         if (roles.Contains(Roles.Admin))
             return NotificationRecipientRole.Admin;
 
-        if (roles.Contains(Roles.Merchant) || roles.Contains(Roles.Vendor))
+        if (roles.Contains(Roles.Merchant) || roles.Contains(Roles.StaffMerchant))
             return NotificationRecipientRole.Merchant;
 
         if (roles.Contains(Roles.Customer))

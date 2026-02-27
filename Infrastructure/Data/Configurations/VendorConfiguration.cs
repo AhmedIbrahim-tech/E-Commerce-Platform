@@ -54,9 +54,17 @@ public class VendorConfiguration : IEntityTypeConfiguration<Vendor>
         builder.Property(v => v.DeletedBy)
             .ConfigureGuid(isRequired: false);
 
-        // Index for AppUserId lookup
         builder.HasIndex(v => v.AppUserId)
             .HasDatabaseName("ix_vendors_app_user_id")
             .IsUnique();
+
+        builder.HasIndex(v => v.StoreName)
+            .HasDatabaseName("ix_vendors_store_name");
+
+        builder.HasIndex(v => v.FullName)
+            .HasDatabaseName("ix_vendors_full_name");
+
+        builder.HasIndex(v => v.CreatedTime)
+            .HasDatabaseName("ix_vendors_created_time");
     }
 }

@@ -1,7 +1,4 @@
 using System.Security.Claims;
-using Domain.Entities.Users;
-using Domain.Enums;
-using Infrastructure.Data.Authorization;
 
 namespace Infrastructure.Seeder;
 
@@ -27,7 +24,7 @@ public static class UserSeeder
             var result = await userManager.CreateAsync(appUser, "Ah7_med@123");
             if (!result.Succeeded)
                 throw new Exception($"Failed to create default user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
-            
+
             var createdUser = await userManager.FindByNameAsync(DefaultUsername);
             if (createdUser == null)
                 throw new Exception("Failed to retrieve created user");
@@ -149,20 +146,20 @@ public static class UserSeeder
     public static async Task SyncAllClaimsToDefaultUserAsync(UserManager<AppUser> userManager)
     {
         var defaultUser = await userManager.FindByNameAsync(DefaultUsername) ?? await userManager.FindByEmailAsync(DefaultEmail);
-        
+
         if (defaultUser == null)
             return;
 
         var allClaims = Permissions.GetAll();
-        
+
         var currentClaims = await userManager.GetClaimsAsync(defaultUser);
         var currentClaimTypes = currentClaims.Select(c => c.Type).ToHashSet();
-        
+
         var missingClaims = allClaims
             .Where(claim => !currentClaimTypes.Contains(claim))
             .Select(claim => new Claim(claim, "True"))
             .ToList();
-        
+
         if (missingClaims.Count != 0)
         {
             await userManager.AddClaimsAsync(defaultUser, missingClaims);

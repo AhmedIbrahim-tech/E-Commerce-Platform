@@ -31,9 +31,6 @@ public class Document : BaseEntity, IAuditable, ISoftDelete
         if (userId == Guid.Empty)
             throw new DomainException("User is required");
 
-        if (string.IsNullOrWhiteSpace(type))
-            throw new DomainException("Document type is required");
-
         if (string.IsNullOrWhiteSpace(fileName))
             throw new DomainException("File name is required");
 
@@ -44,7 +41,7 @@ public class Document : BaseEntity, IAuditable, ISoftDelete
             throw new DomainException("Invalid file size");
 
         UserId = userId;
-        Type = type.Trim();
+        Type = string.IsNullOrWhiteSpace(type) ? "General" : type.Trim();
         Status = DocumentStatus.Pending;
 
         FileName = fileName.Trim();

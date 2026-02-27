@@ -1,3 +1,5 @@
+using Application.ServicesHandlers.Services;
+
 namespace Application.Features.Authentication.Commands.ResetPassword;
 
 public class ResetPasswordCommandHandler(IAuthenticationService authenticationService) : ApiResponseHandler(),
@@ -8,8 +10,8 @@ public class ResetPasswordCommandHandler(IAuthenticationService authenticationSe
         var resetPasswordResult = await authenticationService.ResetPasswordAsync(request.Email, request.NewPassword);
         return resetPasswordResult switch
         {
-            "Success" => Success(""),
-            "UserNotFound" => new ApiResponse<string>(UserErrors.UserNotFound()),
+            AuthenticationService.ResultSuccess => Success(""),
+            AuthenticationService.ResultUserNotFound => new ApiResponse<string>(UserErrors.UserNotFound()),
             _ => new ApiResponse<string>(AuthenticationErrors.InvalidResetToken())
         };
     }

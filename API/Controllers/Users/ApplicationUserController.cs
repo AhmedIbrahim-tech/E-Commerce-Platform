@@ -16,7 +16,7 @@ public class ApplicationUserController : AppControllerBase
 {
     [AllowAnonymous]
     [HttpPost(Router.UserRouting.Register)]
-    public async Task<IActionResult> Register([FromForm] AddCustomerCommand command)
+    public async Task<IActionResult> Register([FromBody] AddCustomerCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
@@ -24,7 +24,7 @@ public class ApplicationUserController : AppControllerBase
 
     [Authorize(Policy = Policies.Auth.ChangePassword)]
     [HttpPut(Router.UserRouting.ChangePassword)]
-    public async Task<IActionResult> ChangePasword([FromBody] ChangeUserPasswordCommand command)
+    public async Task<IActionResult> ChangePassword([FromBody] ChangeUserPasswordCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
@@ -40,7 +40,7 @@ public class ApplicationUserController : AppControllerBase
 
     [Authorize(Policy = Policies.Auth.EditOwnProfile)]
     [HttpPut(Router.UserRouting.Profile)]
-    public async Task<IActionResult> EditMyProfile([FromForm] EditMyProfileCommand command)
+    public async Task<IActionResult> EditMyProfile([FromBody] EditMyProfileCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
@@ -48,7 +48,7 @@ public class ApplicationUserController : AppControllerBase
 
     [Authorize(Roles = Roles.Admin, Policy = Policies.Admin.Create)]
     [HttpPost(Router.UserRouting.CreateAdmin)]
-    public async Task<IActionResult> CreateAdmin([FromForm] AddAdminCommand command)
+    public async Task<IActionResult> CreateAdmin([FromBody] AddAdminCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
@@ -56,7 +56,7 @@ public class ApplicationUserController : AppControllerBase
 
     [Authorize(Roles = Roles.Admin, Policy = Policies.Vendor.Create)]
     [HttpPost(Router.UserRouting.CreateVendor)]
-    public async Task<IActionResult> CreateVendor([FromForm] AddVendorCommand command)
+    public async Task<IActionResult> CreateVendor([FromBody] AddVendorCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
@@ -72,15 +72,15 @@ public class ApplicationUserController : AppControllerBase
     }
 
     [Authorize(Roles = Roles.Admin, Policy = Policies.Admin.ViewProfile)]
-    [HttpPost(Router.UserRouting.GetUserById)]
-    public async Task<IActionResult> GetUserById([FromBody] GetUserByIdQuery query)
+    [HttpGet(Router.UserRouting.GetUserById)]
+    public async Task<IActionResult> GetUserById([FromRoute] Guid id)
     {
-        var response = await Mediator.Send(query);
+        var response = await Mediator.Send(new GetUserByIdQuery(id));
         return NewResult(response);
     }
 
     [Authorize(Roles = Roles.Admin, Policy = Policies.Admin.EditProfile)]
-    [HttpPost(Router.UserRouting.ToggleUserStatus)]
+    [HttpPut(Router.UserRouting.ToggleUserStatus)]
     public async Task<IActionResult> ToggleUserStatus([FromBody] ToggleUserStatusCommand command)
     {
         var response = await Mediator.Send(command);

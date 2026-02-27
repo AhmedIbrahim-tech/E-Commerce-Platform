@@ -1,15 +1,16 @@
 using Application.Common.Bases;
 using Application.ServicesHandlers.Auth;
 using Application.ServicesHandlers.Services;
-using Infrastructure.Data;
+using Domain.Entities.Users;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.ApplicationUser.Queries.GetUserById;
 
 public class GetUserByIdQueryHandler(
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     UserManager<AppUser> userManager,
     ICurrentUserService currentUserService,
     IFileUploadService fileUploadService) : ApiResponseHandler(),
@@ -17,60 +18,49 @@ public class GetUserByIdQueryHandler(
 {
     public async Task<ApiResponse<GetUserByIdResponse>> Handle(GetUserByIdQuery request, CancellationToken cancellationToken)
     {
-        // Try to find user by entity ID (Admin/Vendor/Customer) or AppUserId
-        AppUser? appUser = null;
-        Guid entityId = request.Id;
-        string? fullName = null;
+        var userInfo = await (from admin in unitOfWork.Admins.GetTableNoTracking()
+                               where admin.Id == request.Id
+                               select new { admin.AppUserId, admin.Id, admin.FullName, admin.Gender, admin.SecondPhoneNumber, admin.Address, Type = "Admin" })
+                               .Union(from vendor in unitOfWork.Vendors.GetTableNoTracking()
+                                      where vendor.Id == request.Id
+                                      select new { vendor.AppUserId, vendor.Id, vendor.FullName, vendor.Gender, vendor.SecondPhoneNumber, Address = (string?)null, Type = "Vendor" })
+                               .Union(from customer in unitOfWork.Customers.GetTableNoTracking()
+                                      where customer.Id == request.Id
+                                      select new { customer.AppUserId, customer.Id, customer.FullName, customer.Gender, customer.SecondPhoneNumber, Address = (string?)null, Type = "Customer" })
+                               .FirstOrDefaultAsync(cancellationToken);
 
-        // Check Admin
-        var admin = await dbContext.Admins
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
-        if (admin != null)
+        Guid appUserId;
+        Guid entityId;
+        string? fullName;
+        Gender? gender = null;
+        string? secondPhoneNumber = null;
+        string? address = null;
+
+        if (userInfo != null)
         {
-            entityId = admin.Id;
-            appUser = await userManager.FindByIdAsync(admin.AppUserId.ToString());
-            fullName = admin.FullName;
+            appUserId = userInfo.AppUserId;
+            entityId = userInfo.Id;
+            fullName = userInfo.FullName;
+            gender = userInfo.Gender;
+            secondPhoneNumber = userInfo.SecondPhoneNumber;
+            address = userInfo.Address;
         }
         else
         {
-            // Check Vendor
-            var vendor = await dbContext.Vendors
-                .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.Id == request.Id, cancellationToken);
-            if (vendor != null)
-            {
-                entityId = vendor.Id;
-                appUser = await userManager.FindByIdAsync(vendor.AppUserId.ToString());
-                fullName = vendor.FullName;
-            }
-            else
-            {
-                // Check Customer
-                var customer = await dbContext.Customers
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
-                if (customer != null)
-                {
-                    entityId = customer.Id;
-                    appUser = await userManager.FindByIdAsync(customer.AppUserId.ToString());
-                    fullName = customer.FullName;
-                }
-                else
-                {
-                    // Try as AppUserId directly
-                    appUser = await userManager.FindByIdAsync(request.Id.ToString());
-                    if (appUser != null)
-                    {
-                        entityId = appUser.Id;
-                        fullName = appUser.DisplayName;
-                    }
-                }
-            }
+            appUserId = request.Id;
+            entityId = request.Id;
+            fullName = null;
         }
 
+        var appUser = await userManager.FindByIdAsync(appUserId.ToString());
         if (appUser == null)
             return NotFound<GetUserByIdResponse>("User not found");
+
+        if (userInfo == null)
+        {
+            entityId = appUser.Id;
+            fullName = appUser.DisplayName;
+        }
 
         var roles = await userManager.GetRolesAsync(appUser);
         var role = roles.FirstOrDefault() ?? "Customer";
@@ -80,8 +70,7 @@ public class GetUserByIdQueryHandler(
 
         var isActive = appUser.LockoutEnd == null || appUser.LockoutEnd <= DateTimeOffset.UtcNow;
 
-        // Get last login from refresh tokens (simplified - you may want to track this separately)
-        var lastLogin = await dbContext.UserRefreshTokens
+        var lastLogin = await unitOfWork.RefreshTokens.GetTableNoTracking()
             .Where(t => t.AppUserId == appUser.Id)
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => t.CreatedAt)
@@ -95,11 +84,14 @@ public class GetUserByIdQueryHandler(
             UserName = appUser.UserName,
             Email = appUser.Email,
             PhoneNumber = appUser.PhoneNumber,
+            SecondPhoneNumber = secondPhoneNumber,
+            Gender = gender,
+            Address = address,
             Role = role,
             Roles = roles.ToList(),
-            ProfileImageUrl = fileUploadService.ToAbsoluteUrl(appUser.ProfileImage),
+            ProfileImage = fileUploadService.ToAbsoluteUrl(appUser.ProfileImage),
             IsActive = isActive,
-            CreatedAt = null, // AppUser doesn't track CreatedTime - can be enhanced later
+            CreatedAt = null,
             LastLoginAt = lastLogin != default ? lastLogin : null,
             Claims = claimValues
         };

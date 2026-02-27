@@ -1,4 +1,5 @@
 using Infrastructure.RepositoriesHandlers.Repositories.Accounts;
+using Infrastructure.RepositoriesHandlers.Repositories.Users;
 
 namespace Infrastructure.RepositoriesHandlers.UnitOfWork;
 
@@ -27,6 +28,10 @@ public interface IUnitOfWork : IDisposable
     IRefreshTokenRepository RefreshTokens { get; }
     INotificationRepository Notifications { get; }
     IDocumentRepository Documents { get; }
+    IAdminRepository Admins { get; }
+    ICustomerRepository Customers { get; }
+    IVendorRepository Vendors { get; }
+    IAuditLogRepository AuditLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);
@@ -62,6 +67,10 @@ public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
     private IRefreshTokenRepository? _refreshTokens;
     private INotificationRepository? _notifications;
     private IDocumentRepository? _documents;
+    private IAdminRepository? _admins;
+    private ICustomerRepository? _customers;
+    private IVendorRepository? _vendors;
+    private IAuditLogRepository? _auditLogs;
 
     public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
@@ -133,6 +142,14 @@ public class UnitOfWork(ApplicationDbContext Context) : IUnitOfWork
     public INotificationRepository Notifications => _notifications ??= new NotificationRepository(Context);
 
     public IDocumentRepository Documents => _documents ??= new DocumentRepository(Context);
+
+    public IAdminRepository Admins => _admins ??= new AdminRepository(Context);
+
+    public ICustomerRepository Customers => _customers ??= new CustomerRepository(Context);
+
+    public IVendorRepository Vendors => _vendors ??= new VendorRepository(Context);
+
+    public IAuditLogRepository AuditLogs => _auditLogs ??= new AuditLogRepository(Context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

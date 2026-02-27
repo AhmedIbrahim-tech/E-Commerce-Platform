@@ -1,6 +1,4 @@
-
-using Application.Common.Bases;
-using Application.Common.Errors;
+using Application.ServicesHandlers.Services;
 
 namespace Application.Features.Authentication.ConfirmEmail;
 
@@ -19,8 +17,8 @@ public class ConfirmEmailQueryHandler : ApiResponseHandler,
         var confirmEmailResult = await _authenticationService.ConfirmEmailAsync(request.UserId, request.Code);
         return confirmEmailResult switch
         {
-            "UserOrCodeIsNullOrEmpty" => new ApiResponse<string>(UserErrors.InvalidCode()),
-            "Success" => Success<string>("ConfirmEmailDone"),
+            AuthenticationService.ResultUserOrCodeIsNullOrEmpty => new ApiResponse<string>(UserErrors.InvalidCode()),
+            AuthenticationService.ResultSuccess => Success<string>("ConfirmEmailDone"),
             _ => new ApiResponse<string>(UserErrors.InvalidCode())
         };
     }

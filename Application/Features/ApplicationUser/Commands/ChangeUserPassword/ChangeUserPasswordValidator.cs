@@ -4,10 +4,10 @@ public class ChangeUserPasswordValidator : AbstractValidator<ChangeUserPasswordC
 {
     public ChangeUserPasswordValidator()
     {
-        ApplyValidationRoles();
+        ApplyValidationRules();
     }
 
-    public void ApplyValidationRoles()
+    public void ApplyValidationRules()
     {
         RuleFor(c => c.Id)
             .NotEmpty().WithMessage("Field cannot be empty")

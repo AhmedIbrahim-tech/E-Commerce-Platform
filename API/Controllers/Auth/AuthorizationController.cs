@@ -27,7 +27,7 @@ namespace API.Controllers.Auth
         public async Task<IActionResult> GetRoleList()
         {
             var response = await Mediator.Send(new GetRoleListQuery());
-            return Ok(response);
+            return NewResult(response);
         }
 
         [Authorize(Policy = Policies.Admin.ManageRoles)]

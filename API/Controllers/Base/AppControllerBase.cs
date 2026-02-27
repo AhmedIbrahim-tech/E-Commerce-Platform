@@ -1,13 +1,11 @@
-using Application.Common.Bases;
-
 namespace API.Controllers.Base;
 
 [ApiController]
 public class AppControllerBase : ControllerBase
 {
     private IMediator? _mediator;
-    
-    protected IMediator Mediator => 
+
+    protected IMediator Mediator =>
         _mediator ??= HttpContext.RequestServices.GetRequiredService<IMediator>();
 
     public IActionResult NewResult<T>(ApiResponse<T> response)

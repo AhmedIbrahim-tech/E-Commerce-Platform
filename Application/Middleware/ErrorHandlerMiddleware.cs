@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -34,6 +35,13 @@ public class ErrorHandlerMiddleware(RequestDelegate next, ILogger<ErrorHandlerMi
                 ["traceId"] = context.TraceIdentifier
             }
         };
+
+        if (error is ValidationException validationException)
+        {
+            problemDetails.Extensions["errors"] = validationException.Errors
+                .Select(e => new { PropertyName = e.PropertyName, ErrorMessage = e.ErrorMessage })
+                .ToList();
+        }
 
         context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/problem+json";

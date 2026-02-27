@@ -1,13 +1,18 @@
+using Application.Common.Bases;
+using Application.Common.Errors;
 using Application.Common.Helpers;
 using Application.ServicesHandlers.Services;
-using Infrastructure.Data;
+using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Authentication.Commands.RefreshToken;
 
 public class RefreshTokenCommandHandler(
     UserManager<AppUser> userManager,
     IAuthenticationService authenticationService,
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     IAuditService auditService) : ApiResponseHandler(),
     IRequestHandler<RefreshTokenCommand, ApiResponse<JwtAuthResponse>>
 {
@@ -64,12 +69,16 @@ public class RefreshTokenCommandHandler(
             return new ApiResponse<JwtAuthResponse>(UserErrors.EmailNotConfirmed());
         }
 
-        var isDeleted = await dbContext.Customers
-            .AnyAsync(c => c.AppUserId == user.Id && c.IsDeleted, cancellationToken) ||
-            await dbContext.Vendors
-            .AnyAsync(v => v.AppUserId == user.Id && v.IsDeleted, cancellationToken) ||
-            await dbContext.Admins
-            .AnyAsync(a => a.AppUserId == user.Id && a.IsDeleted, cancellationToken);
+        var isDeleted = await (from c in unitOfWork.Customers.GetTableNoTracking()
+                                where c.AppUserId == user.Id && c.IsDeleted
+                                select true)
+                                .Union(from v in unitOfWork.Vendors.GetTableNoTracking()
+                                       where v.AppUserId == user.Id && v.IsDeleted
+                                       select true)
+                                .Union(from a in unitOfWork.Admins.GetTableNoTracking()
+                                       where a.AppUserId == user.Id && a.IsDeleted
+                                       select true)
+                                .AnyAsync(cancellationToken);
 
         if (isDeleted)
         {

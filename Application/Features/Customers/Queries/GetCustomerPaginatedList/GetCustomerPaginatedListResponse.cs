@@ -9,5 +9,6 @@ public record GetCustomerPaginatedListResponse
     public Gender? Gender { get; init; }
     public string? Role { get; init; }
     public string? ProfileImage { get; init; }
+    public bool IsDeleted { get; init; }
 }
 

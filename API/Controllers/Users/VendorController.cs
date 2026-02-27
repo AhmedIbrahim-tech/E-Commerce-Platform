@@ -9,6 +9,7 @@ using Infrastructure.Data.Authorization;
 
 namespace API.Controllers.Users
 {
+    // No change required – Paginated, GetById, Create use [FromBody]. Edit uses [FromForm] for image upload. Delete uses route id (allowed). ToggleStatus refactored to [FromBody].
     [Authorize(Roles = Roles.Admin)]
     public class VendorController : AppControllerBase
     {
@@ -52,9 +53,9 @@ namespace API.Controllers.Users
 
         [Authorize(Policy = Policies.Vendor.EditProfile)]
         [HttpPost(Router.VendorRouting.ToggleStatus)]
-        public async Task<IActionResult> ToggleVendorStatus([FromRoute] Guid id)
+        public async Task<IActionResult> ToggleVendorStatus([FromBody] ToggleVendorStatusCommand command)
         {
-            return NewResult(await Mediator.Send(new ToggleVendorStatusCommand(id)));
+            return NewResult(await Mediator.Send(command));
         }
     }
 }

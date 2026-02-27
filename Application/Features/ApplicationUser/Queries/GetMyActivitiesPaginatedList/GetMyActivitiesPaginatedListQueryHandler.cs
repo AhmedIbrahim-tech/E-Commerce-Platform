@@ -1,14 +1,13 @@
 using Application.Common.Bases;
 using Application.ServicesHandlers.Auth;
 using Application.Wrappers;
-using Domain.Entities.AuditLogs;
-using Infrastructure.Data;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using System.Text.Json;
 
 namespace Application.Features.ApplicationUser.Queries.GetMyActivitiesPaginatedList;
 
 public class GetMyActivitiesPaginatedListQueryHandler(
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : ApiResponseHandler(),
     IRequestHandler<GetMyActivitiesPaginatedListQuery, PaginatedResult<GetMyActivitiesPaginatedListResponse>>
 {
@@ -17,9 +16,7 @@ public class GetMyActivitiesPaginatedListQueryHandler(
         var userId = currentUserService.GetUserId();
         var eventType = NormalizeCategory(request.Category);
 
-        var auditLogsQuery = dbContext.AuditLogs
-            .AsNoTracking()
-            .AsQueryable()
+        var auditLogsQuery = unitOfWork.AuditLogs.GetTableNoTracking()
             .ApplyFiltering(
                 request.SortBy,
                 request.Search,

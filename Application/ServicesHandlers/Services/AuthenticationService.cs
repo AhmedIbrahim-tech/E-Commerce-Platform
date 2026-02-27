@@ -5,7 +5,7 @@ public interface IAuthenticationService
     Task<JwtAuthResponse> GetJWTTokenAsync(AppUser user);
     Task<JwtAuthResponse> GetRefreshTokenAsync(AppUser user, JwtSecurityToken jwtToken, DateTimeOffset? expiryDate, string refreshToken);
     JwtSecurityToken ReadJwtToken(string accessToken);
-    Task<string> ValidateToken(string accessToken);
+    Task<(bool IsValid, string Message)> ValidateToken(string accessToken);
     Task<(string, DateTimeOffset?)> ValidateDetails(JwtSecurityToken jwtToken, string accessToken, string refreshToken);
     Task<string> ConfirmEmailAsync(Guid? userId, string? code);
     Task<string> SendResetPasswordCodeAsync(string email);
@@ -23,7 +23,7 @@ public class AuthenticationService : IAuthenticationService
     private readonly UserManager<AppUser> _userManager;
     private readonly JwtSettings _jwtSettings;
     private readonly IEmailService _emailService;
-    private readonly ApplicationDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IEncryptionProvider _encryptionProvider;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IAuditService _auditService;
@@ -33,7 +33,7 @@ public class AuthenticationService : IAuthenticationService
     public AuthenticationService(UserManager<AppUser> userManager,
         IOptions<JwtSettings> jwtSettings,
         IEmailService emailService,
-        ApplicationDbContext dbContext,
+        IUnitOfWork unitOfWork,
         IEncryptionProvider encryptionProvider,
         IRefreshTokenRepository refreshTokenRepository,
         IAuditService auditService)
@@ -41,7 +41,7 @@ public class AuthenticationService : IAuthenticationService
         _userManager = userManager;
         _jwtSettings = jwtSettings.Value;
         _emailService = emailService;
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _encryptionProvider = encryptionProvider;
         _refreshTokenRepository = refreshTokenRepository;
         _auditService = auditService;
@@ -228,7 +228,7 @@ public class AuthenticationService : IAuthenticationService
         return response;
     }
 
-    public async Task<string> ValidateToken(string accessToken)
+    public async Task<(bool IsValid, string Message)> ValidateToken(string accessToken)
     {
         var handler = new JwtSecurityTokenHandler();
         var parameters = new TokenValidationParameters
@@ -240,19 +240,24 @@ public class AuthenticationService : IAuthenticationService
             ValidAudience = _jwtSettings.Audience,
             ValidateAudience = _jwtSettings.ValidateAudience,
             ValidateLifetime = _jwtSettings.ValidateLifeTime,
+            ClockSkew = TimeSpan.Zero
         };
         try
         {
             var validator = handler.ValidateToken(accessToken, parameters, out SecurityToken validatedToken);
 
             if (validator == null)
-                return "Invalid JWT token.";
+                return (false, "Invalid JWT token.");
 
-            return "Not Expired.";
+            return (true, "Success");
+        }
+        catch (SecurityTokenExpiredException)
+        {
+            return (false, "Token has expired.");
         }
         catch (Exception ex)
         {
-            return ex.Message;
+            return (false, ex.Message);
         }
     }
 
@@ -330,24 +335,32 @@ public class AuthenticationService : IAuthenticationService
         return (userId, expirydate);
     }
 
+    public const string ResultSuccess = "Success";
+    public const string ResultUserNotFound = "UserNotFound";
+    public const string ResultFailed = "Failed";
+    public const string ResultUserOrCodeIsNullOrEmpty = "UserOrCodeIsNullOrEmpty";
+    public const string ResultErrorInUpdateUser = "ErrorInUpdateUser";
+
+    // ... existing code ...
+
     public async Task<string> ConfirmEmailAsync(Guid? userId, string? code)
     {
         if (userId is null || string.IsNullOrEmpty(code))
-            return "UserOrCodeIsNullOrEmpty";
+            return ResultUserOrCodeIsNullOrEmpty;
         var user = await _userManager.FindByIdAsync(userId.ToString()!);
         var confirmEmailResult = await _userManager.ConfirmEmailAsync(user!, code);
         if (!confirmEmailResult.Succeeded)
             return string.Join(",", confirmEmailResult.Errors.Select(x => x.Description).ToList());
-        return "Success";
+        return ResultSuccess;
     }
 
     public async Task<string> SendResetPasswordCodeAsync(string email)
     {
-        var trans = await _dbContext.Database.BeginTransactionAsync();
+        using var trans = await _unitOfWork.BeginTransactionAsync(CancellationToken.None);
         try
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user is null) return "UserNotFound";
+            if (user is null) return ResultUserNotFound;
 
             var chars = "0123456789";
             var random = new Random();
@@ -356,7 +369,10 @@ public class AuthenticationService : IAuthenticationService
             user.Code = randomNumber;
             var updateResult = await _userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
-                return "ErrorInUpdateUser";
+            {
+                await _unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+                return ResultErrorInUpdateUser;
+            }
 
             var resetPasswordBody = BuildResetPasswordEmailBody(user.Code);
             var emailDto = new EmailDto
@@ -366,46 +382,54 @@ public class AuthenticationService : IAuthenticationService
                 Body = resetPasswordBody
             };
             await _emailService.SendEmailsAsync(emailDto);
-            await trans.CommitAsync();
-            return "Success";
+            await _unitOfWork.CommitTransactionAsync(CancellationToken.None);
+            return ResultSuccess;
         }
         catch (Exception)
         {
-            await trans.RollbackAsync();
-            return "Failed";
+            await _unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+            return ResultFailed;
         }
     }
 
     public async Task<string> ConfirmResetPasswordAsync(string code, string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
-        if (user is null) return "UserNotFound";
+        if (user is null) return ResultUserNotFound;
 
         var userCode = user.Code;
 
-        if (userCode == code) return "Success";
-        return "Failed";
+        if (userCode == code) return ResultSuccess;
+        return ResultFailed;
     }
 
     public async Task<string> ResetPasswordAsync(string email, string newNassword)
     {
-        var trans = await _dbContext.Database.BeginTransactionAsync();
+        using var trans = await _unitOfWork.BeginTransactionAsync(CancellationToken.None);
         try
         {
             var user = await _userManager.FindByEmailAsync(email);
-            if (user == null) return "UserNotFound";
+            if (user == null) return ResultUserNotFound;
 
             await _userManager.RemovePasswordAsync(user);
             if (!await _userManager.HasPasswordAsync(user))
                 await _userManager.AddPasswordAsync(user, newNassword);
 
-            await trans.CommitAsync();
-            return "Success";
+            user.Code = null;
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                await _unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+                return ResultErrorInUpdateUser;
+            }
+
+            await _unitOfWork.CommitTransactionAsync(CancellationToken.None);
+            return ResultSuccess;
         }
         catch (Exception)
         {
-            await trans.RollbackAsync();
-            return "Failed";
+            await _unitOfWork.RollbackTransactionAsync(CancellationToken.None);
+            return ResultFailed;
         }
     }
 

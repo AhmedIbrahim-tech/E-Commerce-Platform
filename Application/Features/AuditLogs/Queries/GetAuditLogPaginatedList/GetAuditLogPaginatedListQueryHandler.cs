@@ -1,16 +1,15 @@
 using Application.Common.Bases;
 using Application.Wrappers;
-using Infrastructure.Data;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.AuditLogs.Queries.GetAuditLogPaginatedList;
 
-public class GetAuditLogPaginatedListQueryHandler(ApplicationDbContext dbContext) : ApiResponseHandler(),
+public class GetAuditLogPaginatedListQueryHandler(IUnitOfWork unitOfWork) : ApiResponseHandler(),
     IRequestHandler<GetAuditLogPaginatedListQuery, PaginatedResult<GetAuditLogPaginatedListResponse>>
 {
     public async Task<PaginatedResult<GetAuditLogPaginatedListResponse>> Handle(GetAuditLogPaginatedListQuery request, CancellationToken cancellationToken)
     {
-        var auditLogsQuery = dbContext.AuditLogs
-            .AsQueryable()
+        var auditLogsQuery = unitOfWork.AuditLogs.GetTableNoTracking()
             .ApplyFiltering(
                 request.SortBy,
                 request.Search,

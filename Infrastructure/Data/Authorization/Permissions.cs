@@ -235,7 +235,20 @@ public static class Permissions
                 Product.ViewList,
                 Product.View
             },
-            Roles.Vendor => new List<string>
+            Roles.Merchant => new List<string>
+            {
+                Vendor.ViewProfile,
+                Vendor.EditProfile,
+                Vendor.ViewDashboard,
+                Auth.ChangePassword,
+                Auth.ViewOwnProfile,
+                Auth.EditOwnProfile,
+                Product.ViewList,
+                Product.View,
+                Product.Create,
+                Product.Edit
+            },
+            Roles.StaffMerchant => new List<string>
             {
                 Vendor.ViewProfile,
                 Vendor.EditProfile,

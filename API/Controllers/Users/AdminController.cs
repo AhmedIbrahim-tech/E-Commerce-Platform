@@ -8,6 +8,7 @@ using Infrastructure.Data.Authorization;
 
 namespace API.Controllers.Users;
 
+// Paginated, GetById, Create use [FromBody]. Edit uses [FromForm] for profile image upload. Delete uses route id (allowed). ToggleStatus refactored to [FromBody].
 [Authorize(Roles = Roles.Admin)]
 public class AdminController : AppControllerBase
 {
@@ -42,6 +43,7 @@ public class AdminController : AppControllerBase
         return NewResult(response);
     }
 
+    // No change required – DELETE by id uses route param as allowed by rule.
     [Authorize(Policy = Policies.Admin.Delete)]
     [HttpDelete(Router.AdminRouting.Delete)]
     public async Task<IActionResult> DeleteAdmin([FromRoute] Guid id)
@@ -51,8 +53,8 @@ public class AdminController : AppControllerBase
 
     [Authorize(Policy = Policies.Admin.EditProfile)]
     [HttpPost(Router.AdminRouting.ToggleStatus)]
-    public async Task<IActionResult> ToggleAdminStatus([FromRoute] Guid id)
+    public async Task<IActionResult> ToggleAdminStatus([FromBody] ToggleAdminStatusCommand command)
     {
-        return NewResult(await Mediator.Send(new ToggleAdminStatusCommand(id)));
+        return NewResult(await Mediator.Send(command));
     }
 }

@@ -1,49 +1,39 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
-using Application.Wrappers;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.Customers.Commands.EditCustomer;
 
-public class EditCustomerCommandHandler : ApiResponseHandler,
+public class EditCustomerCommandHandler(
+    IUnitOfWork unitOfWork,
+    UserManager<AppUser> userManager) : ApiResponseHandler(),
     IRequestHandler<EditCustomerCommand, ApiResponse<string>>
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AppUser> _userManager;
-
-    public EditCustomerCommandHandler(ApplicationDbContext dbContext, UserManager<AppUser> userManager) : base()
-    {
-        _dbContext = dbContext;
-        _userManager = userManager;
-    }
-
     public async Task<ApiResponse<string>> Handle(EditCustomerCommand request, CancellationToken cancellationToken)
     {
-        var customer = await _dbContext.Customers
+        var customer = await unitOfWork.Customers.GetTableAsTracking()
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
         
         if (customer is null) return new ApiResponse<string>(CustomerErrors.CustomerNotFound());
 
-        var appUser = await _userManager.FindByIdAsync(customer.AppUserId.ToString());
+        var appUser = await userManager.FindByIdAsync(customer.AppUserId.ToString());
         if (appUser is null) return new ApiResponse<string>(UserErrors.UserNotFound());
 
-        var isUserNameDuplicate = await _userManager.UserNameExistsAsync(request.UserName!, customer.AppUserId);
+        var isUserNameDuplicate = await userManager.UserNameExistsAsync(request.UserName!, customer.AppUserId);
         if (isUserNameDuplicate)
             return new ApiResponse<string>(UserErrors.DuplicatedEmail());
 
-        var isEmailDuplicate = await _userManager.EmailExistsAsync(request.Email!, customer.AppUserId);
+        var isEmailDuplicate = await userManager.EmailExistsAsync(request.Email!, customer.AppUserId);
         if (isEmailDuplicate)
             return new ApiResponse<string>(CustomerErrors.DuplicatedPhoneNumber());
 
-        // Update AppUser properties
         appUser.UserName = request.UserName;
         appUser.Email = request.Email;
         appUser.PhoneNumber = request.PhoneNumber;
         var fullName = $"{request.FirstName} {request.LastName}".Trim();
         appUser.SetDisplayName(fullName);
 
-        // Update Customer properties
         customer.ChangeName(fullName, appUser.Id);
         if (request.Gender.HasValue)
         {
@@ -53,11 +43,11 @@ public class EditCustomerCommandHandler : ApiResponseHandler,
         customer.ChangePhoneNumber(request.PhoneNumber, appUser.Id);
         customer.ChangeSecondPhoneNumber(request.SecondPhoneNumber, appUser.Id);
 
-        var updateAppUserResult = await _userManager.UpdateAsync(appUser);
+        var updateAppUserResult = await userManager.UpdateAsync(appUser);
         if (!updateAppUserResult.Succeeded)
             return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return Edit("");
     }
 }

@@ -2,23 +2,23 @@ using Application.Common.Bases;
 using Application.ServicesHandlers.Services;
 using Application.Wrappers;
 using Domain.Entities.Users;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Admins.Queries.GetAdminPaginatedList;
 
 public class GetAdminPaginatedListQueryHandler(
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     UserManager<AppUser> userManager,
     IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<GetAdminPaginatedListQuery, PaginatedResult<GetAdminPaginatedListResponse>>
 {
     public async Task<PaginatedResult<GetAdminPaginatedListResponse>> Handle(GetAdminPaginatedListQuery request, CancellationToken cancellationToken)
     {
-        var adminsQuery = dbContext.Admins
+        var adminsQuery = unitOfWork.Admins.GetTableNoTracking()
             .IgnoreQueryFilters()
-            .AsNoTracking()
-            .AsQueryable()
             .ApplyFiltering(request.SortBy, request.Search);
 
         var adminsWithAppUsers = await adminsQuery
@@ -32,14 +32,37 @@ public class GetAdminPaginatedListQueryHandler(
                 })
             .ToPaginatedListAsync(request.PageNumber, request.PageSize);
 
-        var userIds = adminsWithAppUsers.Data.Select(x => x.AppUser.Id).ToList();
-        var userRolesDict = new Dictionary<Guid, string>();
-        
-        foreach (var item in adminsWithAppUsers.Data)
+        if (!adminsWithAppUsers.Data.Any())
         {
-            var roles = await userManager.GetRolesAsync(item.AppUser);
-            userRolesDict[item.AppUser.Id] = roles.FirstOrDefault() ?? string.Empty;
+            return new PaginatedResult<GetAdminPaginatedListResponse>(new List<GetAdminPaginatedListResponse>())
+            {
+                CurrentPage = request.PageNumber,
+                TotalPages = 0,
+                TotalCount = 0,
+                PageSize = request.PageSize,
+                Succeeded = true
+            };
         }
+
+        var userIds = adminsWithAppUsers.Data.Select(x => x.AppUser.Id).ToList();
+        
+        var userRoleIds = await (from ur in unitOfWork.Context.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>()
+                                  where userIds.Contains(ur.UserId)
+                                  select new { ur.UserId, ur.RoleId })
+                                  .ToListAsync(cancellationToken);
+
+        var roleIds = userRoleIds.Select(x => x.RoleId).Distinct().ToList();
+        var rolesDict = await unitOfWork.Context.Set<AppRole>()
+            .AsNoTracking()
+            .Where(r => roleIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => r.Name ?? string.Empty, cancellationToken);
+
+        var userRolesDict = userRoleIds
+            .GroupBy(x => x.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => rolesDict.GetValueOrDefault(g.First().RoleId, string.Empty)
+            );
 
         var responses = adminsWithAppUsers.Data.Select(item => new GetAdminPaginatedListResponse
         {

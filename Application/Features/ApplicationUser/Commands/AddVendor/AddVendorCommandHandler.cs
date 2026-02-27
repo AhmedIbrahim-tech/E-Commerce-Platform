@@ -2,16 +2,17 @@ using Application.Common.Errors;
 using Application.ServicesHandlers.Auth;
 using Application.ServicesHandlers.Services;
 using Domain.Entities.Users;
-using Infrastructure.Data;
 using Infrastructure.Data.Authorization;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.ApplicationUser.Commands.AddVendor;
 
 internal class AddVendorCommandHandler(
     UserManager<AppUser> userManager,
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService,
     IUserCreationService userCreationService,
     IFileUploadService fileUploadService,
@@ -25,7 +26,7 @@ internal class AddVendorCommandHandler(
         {
             Email = request.Email,
             PhoneNumber = request.PhoneNumber,
-            EmailConfirmed = true // Vendor users are created by admins/vendors, so email is trusted
+            EmailConfirmed = true
         };
 
         appUser.Id = Guid.NewGuid();
@@ -43,49 +44,45 @@ internal class AddVendorCommandHandler(
                 appUser.ProfileImage = profileImageUrls[0];
         }
 
-        using var trans = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using var trans = await unitOfWork.BeginTransactionAsync(cancellationToken);
         try
         {
-            // Validate email and username uniqueness
             var userEmailIsExistResult = await userManager.FindByEmailAsync(appUser.Email!);
             if (userEmailIsExistResult != null)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(UserErrors.DuplicatedEmail());
             }
 
             var userByUserName = await userManager.FindByNameAsync(appUser.UserName!);
             if (userByUserName != null)
             {
-                await trans.RollbackAsync(cancellationToken);
-                return new ApiResponse<string>(UserErrors.DuplicatedEmail());
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                return new ApiResponse<string>(UserErrors.DuplicatedUserName());
             }
 
-            // Get creator ID
             var creatorId = currentUserService.GetUserId();
             var creator = await userManager.FindByIdAsync(creatorId.ToString());
             if (creator == null)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(UserErrors.UserNotFound());
             }
 
             var creatorRoles = await userManager.GetRolesAsync(creator);
             var creatorRole = creatorRoles.FirstOrDefault();
 
-            // Determine store information based on creator
             string storeName;
             decimal commissionRate;
 
             if (creatorRole == Roles.Merchant)
             {
-                // Vendor owner creating staff - use same store info
-                var creatorVendor = await dbContext.Vendors
+                var creatorVendor = await unitOfWork.Vendors.GetTableNoTracking()
                     .FirstOrDefaultAsync(v => v.AppUserId == creatorId, cancellationToken);
                 
                 if (creatorVendor == null)
                 {
-                    await trans.RollbackAsync(cancellationToken);
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
                     return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
                 }
 
@@ -94,35 +91,31 @@ internal class AddVendorCommandHandler(
             }
             else
             {
-                // Admin/SuperAdmin creating new vendor - use provided info
                 storeName = request.StoreName;
                 commissionRate = request.CommissionRate;
                 
                 if (string.IsNullOrWhiteSpace(storeName))
                 {
-                    await trans.RollbackAsync(cancellationToken);
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
                     return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
                 }
                 
                 if (commissionRate <= 0 || commissionRate >= 100)
                 {
-                    await trans.RollbackAsync(cancellationToken);
+                    await unitOfWork.RollbackTransactionAsync(cancellationToken);
                     return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
                 }
             }
 
-            // Role is ALWAYS Vendor (server-determined, never from request)
             const string targetRole = Roles.Merchant;
 
-            // Validate creator can create Vendor role
             var roleValidation = await userCreationService.ValidateRoleAssignmentAsync(creatorId, targetRole);
             if (!roleValidation.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return roleValidation;
             }
 
-            // Create user with Vendor role and default claims
             var createResult = await userCreationService.CreateUserWithRoleAsync(
                 appUser,
                 request.Password!,
@@ -131,11 +124,10 @@ internal class AddVendorCommandHandler(
 
             if (!createResult.Succeeded)
             {
-                await trans.RollbackAsync(cancellationToken);
+                await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
             }
 
-            // Create Vendor profile
             var vendor = new Vendor(
                 appUserId: appUser.Id,
                 ownerName: fullName,
@@ -155,8 +147,8 @@ internal class AddVendorCommandHandler(
                 vendor.ChangeSecondPhoneNumber(request.SecondPhoneNumber, creatorId);
             }
 
-            await dbContext.Vendors.AddAsync(vendor, cancellationToken);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.Vendors.AddAsync(vendor, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
             await notificationService.CreateAsync(
                 "merchant_registered",
@@ -166,12 +158,12 @@ internal class AddVendorCommandHandler(
                     MerchantIds: new[] { appUser.Id }),
                 cancellationToken);
 
-            await trans.CommitAsync(cancellationToken);
+            await unitOfWork.CommitTransactionAsync(cancellationToken);
             return Created("");
         }
         catch (Exception)
         {
-            await trans.RollbackAsync(cancellationToken);
+            await unitOfWork.RollbackTransactionAsync(cancellationToken);
             return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
         }
     }

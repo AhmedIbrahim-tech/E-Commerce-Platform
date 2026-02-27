@@ -4,9 +4,9 @@ using Application.Common.Errors;
 using Application.ServicesHandlers.Auth;
 using Application.ServicesHandlers.Services;
 using Domain.Entities.AuditLogs;
+using Infrastructure.Data.Identity;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using System.Text.Json;
-using Infrastructure.Data.Identity;
 
 namespace Application.Features.ApplicationUser.Commands.EditMyProfile;
 
@@ -71,6 +71,24 @@ public class EditMyProfileCommandHandler(
             return BadRequest<EditMyProfileResponse>("Failed to update profile");
         }
 
+        if (changedFields.Any())
+        {
+            await unitOfWork.AuditLogs.AddAsync(new AuditLog(
+                eventType: "Profile",
+                eventName: "ProfileUpdated",
+                description: "Profile updated",
+                userId: user.Id,
+                userEmail: user.Email,
+                additionalData: JsonSerializer.Serialize(new
+                {
+                    entityType = "profile",
+                    entityId = user.Id,
+                    fields = changedFields
+                })), cancellationToken);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
         var response = new EditMyProfileResponse
         {
             Id = user.Id,
@@ -80,21 +98,6 @@ public class EditMyProfileCommandHandler(
             PhoneNumber = user.PhoneNumber ?? string.Empty,
             ProfileImageUrl = fileUploadService.ToAbsoluteUrl(user.ProfileImage)
         };
-
-        unitOfWork.Context.AuditLogs.Add(new AuditLog(
-            eventType: "Profile",
-            eventName: "ProfileUpdated",
-            description: "Profile updated",
-            userId: user.Id,
-            userEmail: user.Email,
-            additionalData: JsonSerializer.Serialize(new
-            {
-                entityType = "profile",
-                entityId = user.Id,
-                fields = changedFields
-            })));
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return Edit(response, "Profile updated successfully");
     }

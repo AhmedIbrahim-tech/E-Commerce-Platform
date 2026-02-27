@@ -1,22 +1,16 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
-using Infrastructure.Data;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.AuditLogs.Queries.GetAuditLogById;
 
-public class GetAuditLogByIdQueryHandler : ApiResponseHandler,
+public class GetAuditLogByIdQueryHandler(
+    IUnitOfWork unitOfWork) : ApiResponseHandler(),
     IRequestHandler<GetAuditLogByIdQuery, ApiResponse<GetAuditLogByIdResponse>>
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public GetAuditLogByIdQueryHandler(ApplicationDbContext dbContext) : base()
-    {
-        _dbContext = dbContext;
-    }
-
     public async Task<ApiResponse<GetAuditLogByIdResponse>> Handle(GetAuditLogByIdQuery request, CancellationToken cancellationToken)
     {
-        var auditLog = await _dbContext.AuditLogs
+        var auditLog = await unitOfWork.AuditLogs.GetTableNoTracking()
             .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
         
         if (auditLog is null) 

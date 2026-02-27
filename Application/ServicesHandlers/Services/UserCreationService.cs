@@ -48,7 +48,7 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
             }
         }
 
-        await UserSeeder.SyncAllClaimsToDefaultUserAsync(userManager);
+
 
         return IdentityResult.Success;
     }
@@ -70,6 +70,7 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
             Roles.SuperAdmin => ValidateSuperAdminCanCreate(targetRole),
             Roles.Admin => ValidateAdminCanCreate(targetRole),
             Roles.Merchant => ValidateMerchantCanCreate(targetRole),
+            Roles.StaffMerchant => ValidateMerchantCanCreate(targetRole),
             _ => new ApiResponse<string>(RoleErrors.InvalidPermissions())
         };
     }
@@ -114,9 +115,11 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
 
             (Roles.Admin, Roles.Admin) => Permissions.GetDefaultForRole(Roles.Admin),
             (Roles.Admin, Roles.Merchant) => Permissions.GetDefaultForRole(Roles.Merchant),
+            (Roles.Admin, Roles.StaffMerchant) => Permissions.GetDefaultForRole(Roles.StaffMerchant),
             (Roles.Admin, Roles.Customer) => Permissions.GetDefaultForRole(Roles.Customer),
 
             (Roles.Merchant, Roles.Merchant) => GetMerchantAllowedClaims(),
+            (Roles.Merchant, Roles.StaffMerchant) => GetMerchantAllowedClaims(),
 
             _ => new List<string>()
         };
@@ -138,7 +141,7 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
 
     private ApiResponse<string> ValidateSuperAdminCanCreate(string targetRole)
     {
-        var allowedRoles = new[] { Roles.SuperAdmin, Roles.Admin, Roles.Vendor, Roles.Customer };
+        var allowedRoles = new[] { Roles.SuperAdmin, Roles.Admin, Roles.Merchant, Roles.StaffMerchant, Roles.Customer };
         if (!allowedRoles.Contains(targetRole))
             return new ApiResponse<string>(RoleErrors.InvalidPermissions());
 
@@ -147,7 +150,7 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
 
     private ApiResponse<string> ValidateAdminCanCreate(string targetRole)
     {
-        var allowedRoles = new[] { Roles.Admin, Roles.Merchant, Roles.Customer };
+        var allowedRoles = new[] { Roles.Admin, Roles.Merchant, Roles.StaffMerchant, Roles.Customer };
         if (!allowedRoles.Contains(targetRole))
             return new ApiResponse<string>(RoleErrors.InvalidPermissions());
 
@@ -156,7 +159,7 @@ public class UserCreationService(UserManager<AppUser> userManager, IDefaultClaim
 
     private ApiResponse<string> ValidateMerchantCanCreate(string targetRole)
     {
-        if (targetRole != Roles.Merchant)
+        if (targetRole != Roles.Merchant && targetRole != Roles.StaffMerchant)
             return new ApiResponse<string>(RoleErrors.InvalidPermissions());
 
         return new ApiResponse<string> { Succeeded = true };

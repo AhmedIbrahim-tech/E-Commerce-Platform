@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace API.Controllers.Catalog;
 
-[Authorize]
+//[Authorize]
 public class ProductController(IMemoryCache memoryCache) : AppControllerBase
 {
     [AllowAnonymous]
@@ -26,7 +26,7 @@ public class ProductController(IMemoryCache memoryCache) : AppControllerBase
         return NewResult(await Mediator.Send(query));
     }
 
-    [Authorize(Roles = Roles.Admin, Policy = Policies.Product.Create)]
+    //[Authorize(Roles = Roles.Admin, Policy = Policies.Product.Create)]
     [HttpPost(Router.ProductRouting.Create)]
     public async Task<IActionResult> CreateProduct([FromForm] AddProductCommand command)
     {

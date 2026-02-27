@@ -57,15 +57,16 @@ public static class ServiceRegistration
         return services;
     }
 
-    public static IServiceCollection AddApplicationCors(this IServiceCollection services)
+    public static IServiceCollection AddApplicationCors(this IServiceCollection services, IConfiguration configuration)
     {
+
         services.AddCors(options =>
         {
             options.AddPolicy(CORS_POLICY_NAME, policy =>
             {
-                policy.AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowAnyOrigin();
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
             });
         });
 
@@ -129,13 +130,14 @@ public static class ServiceRegistration
         var defaultUser = await userManager.FindByNameAsync(UserSeeder.DefaultUsername) ?? await userManager.FindByEmailAsync(UserSeeder.DefaultEmail);
         var defaultUserId = defaultUser?.Id ?? Guid.Empty;
         
-        await Infrastructure.Seeder.CategorySeeder.SeedAsync(dbContext);
-        await Infrastructure.Seeder.SubCategorySeeder.SeedAsync(dbContext, defaultUserId);
-        await Infrastructure.Seeder.BrandSeeder.SeedAsync(dbContext, defaultUserId);
-        await Infrastructure.Seeder.UnitOfMeasureSeeder.SeedAsync(dbContext, defaultUserId);
-        await Infrastructure.Seeder.WarrantySeeder.SeedAsync(dbContext, defaultUserId);
-        await Infrastructure.Seeder.VariantAttributeSeeder.SeedAsync(dbContext, defaultUserId);
-        await Infrastructure.Seeder.TagSeeder.SeedAsync(dbContext, defaultUserId);
+        await CategorySeeder.SeedAsync(dbContext);
+        await SubCategorySeeder.SeedAsync(dbContext, defaultUserId);
+        await BrandSeeder.SeedAsync(dbContext, defaultUserId);
+        await UnitOfMeasureSeeder.SeedAsync(dbContext, defaultUserId);
+        await WarrantySeeder.SeedAsync(dbContext, defaultUserId);
+        await VariantAttributeSeeder.SeedAsync(dbContext, defaultUserId);
+        await TagSeeder.SeedAsync(dbContext, defaultUserId);
+        await ProductSeeder.SeedAsync(dbContext, defaultUserId);
     }
 
     private static IUrlHelper CreateUrlHelper(IServiceProvider serviceProvider)

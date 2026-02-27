@@ -1,69 +1,47 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
 using Application.ServicesHandlers.Auth;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.ApplicationUser.Commands.ToggleUserStatus;
 
 public class ToggleUserStatusCommandHandler(
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     UserManager<AppUser> userManager,
     ICurrentUserService currentUserService) : ApiResponseHandler(),
     IRequestHandler<ToggleUserStatusCommand, ApiResponse<string>>
 {
     public async Task<ApiResponse<string>> Handle(ToggleUserStatusCommand request, CancellationToken cancellationToken)
     {
-        // Find AppUser by entity ID
-        AppUser? appUser = null;
+        var appUserId = await (from admin in unitOfWork.Admins.GetTableNoTracking()
+                                where admin.Id == request.Id
+                                select admin.AppUserId)
+                                .Union(from vendor in unitOfWork.Vendors.GetTableNoTracking()
+                                       where vendor.Id == request.Id
+                                       select vendor.AppUserId)
+                                .Union(from customer in unitOfWork.Customers.GetTableNoTracking()
+                                       where customer.Id == request.Id
+                                       select customer.AppUserId)
+                                .FirstOrDefaultAsync(cancellationToken);
 
-        var admin = await dbContext.Admins
-            .AsTracking()
-            .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
-        if (admin != null)
+        if (appUserId == Guid.Empty)
         {
-            appUser = await userManager.FindByIdAsync(admin.AppUserId.ToString());
-        }
-        else
-        {
-            var vendor = await dbContext.Vendors
-                .AsTracking()
-                .FirstOrDefaultAsync(v => v.Id == request.Id, cancellationToken);
-            if (vendor != null)
-            {
-                appUser = await userManager.FindByIdAsync(vendor.AppUserId.ToString());
-            }
-            else
-            {
-                var customer = await dbContext.Customers
-                    .AsTracking()
-                    .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
-                if (customer != null)
-                {
-                    appUser = await userManager.FindByIdAsync(customer.AppUserId.ToString());
-                }
-                else
-                {
-                    // Try as AppUserId directly
-                    appUser = await userManager.FindByIdAsync(request.Id.ToString());
-                }
-            }
+            appUserId = request.Id;
         }
 
+        var appUser = await userManager.FindByIdAsync(appUserId.ToString());
         if (appUser == null)
             return NotFound<string>("User not found");
 
-        // Toggle lockout (inactive = locked)
         if (request.IsActive)
         {
-            // Unlock user
             appUser.LockoutEnd = null;
         }
         else
         {
-            // Lock user (set lockout to far future)
             appUser.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
         }
 

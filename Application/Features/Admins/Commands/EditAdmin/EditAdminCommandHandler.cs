@@ -2,44 +2,33 @@ using Application.Common.Bases;
 using Application.Common.Errors;
 using Application.ServicesHandlers.Services;
 using Domain.Entities.Users;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Features.Admins.Commands.EditAdmin;
 
-public class EditAdminCommandHandler : ApiResponseHandler,
+public class EditAdminCommandHandler(
+    IUnitOfWork unitOfWork,
+    UserManager<AppUser> userManager,
+    IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<EditAdminCommand, ApiResponse<string>>
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly IFileUploadService _fileUploadService;
-
-    public EditAdminCommandHandler(
-        ApplicationDbContext dbContext, 
-        UserManager<AppUser> userManager,
-        IFileUploadService fileUploadService) : base()
-    {
-        _dbContext = dbContext;
-        _userManager = userManager;
-        _fileUploadService = fileUploadService;
-    }
-
     public async Task<ApiResponse<string>> Handle(EditAdminCommand request, CancellationToken cancellationToken)
     {
-        var admin = await _dbContext.Admins
+        var admin = await unitOfWork.Admins.GetTableAsTracking()
             .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
         
         if (admin is null) return new ApiResponse<string>(AdminErrors.AdminNotFound());
 
-        var appUser = await _userManager.FindByIdAsync(admin.AppUserId.ToString());
+        var appUser = await userManager.FindByIdAsync(admin.AppUserId.ToString());
         if (appUser is null) return new ApiResponse<string>(UserErrors.UserNotFound());
 
-        var isUserNameDuplicate = await _userManager.UserNameExistsAsync(request.UserName!, admin.AppUserId);
+        var isUserNameDuplicate = await userManager.UserNameExistsAsync(request.UserName!, admin.AppUserId);
         if (isUserNameDuplicate)
             return new ApiResponse<string>(UserErrors.DuplicatedEmail());
 
-        var isEmailDuplicate = await _userManager.EmailExistsAsync(request.Email!, admin.AppUserId);
+        var isEmailDuplicate = await userManager.EmailExistsAsync(request.Email!, admin.AppUserId);
         if (isEmailDuplicate)
             return new ApiResponse<string>(UserErrors.DuplicatedEmail());
 
@@ -51,8 +40,8 @@ public class EditAdminCommandHandler : ApiResponseHandler,
 
         if (request.ProfileImage != null)
         {
-            await _fileUploadService.TryDeleteFileAsync(appUser.ProfileImage, cancellationToken);
-            var profileImageUrls = await _fileUploadService.UploadAndGetUrlsAsync(
+            await fileUploadService.TryDeleteFileAsync(appUser.ProfileImage, cancellationToken);
+            var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
                 new[] { request.ProfileImage },
                 Application.Common.Constants.FileLocations.Users,
                 appUser.Id,
@@ -78,11 +67,11 @@ public class EditAdminCommandHandler : ApiResponseHandler,
         admin.ChangePhoneNumber(request.PhoneNumber, admin.AppUserId);
         admin.ChangeSecondPhoneNumber(request.SecondPhoneNumber, admin.AppUserId);
 
-        var updateAppUserResult = await _userManager.UpdateAsync(appUser);
+        var updateAppUserResult = await userManager.UpdateAsync(appUser);
         if (!updateAppUserResult.Succeeded)
             return new ApiResponse<string>(AdminErrors.InvalidAdminData());
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return Edit("");
     }
 }

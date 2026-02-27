@@ -2,16 +2,16 @@ namespace Application.Wrappers
 {
     public class PaginatedResult<T>
     {
-        public int CurrentPage { get; set; }
+        public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
-        public int TotalCount { get; set; }
-        public object Meta { get; set; }
-        public int PageSize { get; set; }
+        public int TotalCount { get; set; } = 0;
+        public object Meta { get; set; } = new();
+        public int PageSize { get; set; } = 10;
         public bool HasPreviousPage => CurrentPage > 1;
         public bool HasNextPage => CurrentPage < TotalPages;
-        public List<string> Messages { get; set; } = new();
-        public bool Succeeded { get; set; }
-        public List<T> Data { get; set; }
+        public List<string> Messages { get; set; } = [];
+        public bool Succeeded { get; set; } = false;
+        public List<T> Data { get; set; } = [];
 
         public PaginatedResult(List<T> data)
         {

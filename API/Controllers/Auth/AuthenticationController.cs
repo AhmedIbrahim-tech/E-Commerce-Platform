@@ -1,6 +1,7 @@
 using Application.Features.Authentication.AuthorizeUser;
 using Application.Features.Authentication.ConfirmEmail;
 using Application.Features.Authentication.ConfirmResetPassword;
+using Application.Features.Authentication.TwoStepVerification;
 using Application.Features.Authentication.Commands.SignIn;
 using Application.Features.Authentication.Commands.SendResetPassword;
 using Application.Features.Authentication.Commands.ResetPassword;
@@ -32,22 +33,22 @@ namespace API.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost(Router.Authentication.RefreshToken)]
-        public async Task<IActionResult> RefreshToken([FromForm] RefreshTokenCommand command)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenCommand command)
         {
             var response = await Mediator.Send(command);
             return NewResult(response);
         }
 
-        [HttpGet(Router.Authentication.ValidateToken)]
-        public async Task<IActionResult> ValidateToken([FromQuery] AuthorizeUserQuery query)
+        [HttpPost(Router.Authentication.ValidateToken)]
+        public async Task<IActionResult> ValidateToken([FromBody] AuthorizeUserQuery query)
         {
             var response = await Mediator.Send(query);
             return NewResult(response);
         }
 
         [AllowAnonymous]
-        [HttpGet(Router.Authentication.ConfirmEmail)]
-        public async Task<IActionResult> ConfirmEmail([FromQuery] ConfirmEmailQuery query)
+        [HttpPost(Router.Authentication.ConfirmEmail)]
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailQuery query)
         {
             var response = await Mediator.Send(query);
             return NewResult(response);
@@ -55,15 +56,15 @@ namespace API.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost(Router.Authentication.SendResetPasswordCode)]
-        public async Task<IActionResult> SendResetPasswordCode([FromQuery] SendResetPasswordCommand command)
+        public async Task<IActionResult> SendResetPasswordCode([FromBody] SendResetPasswordCommand command)
         {
             var response = await Mediator.Send(command);
             return NewResult(response);
         }
 
         [AllowAnonymous]
-        [HttpGet(Router.Authentication.ConfirmResetPasswordCode)]
-        public async Task<IActionResult> ConfirmResetPasswordCode([FromQuery] ConfirmResetPasswordQuery query)
+        [HttpPost(Router.Authentication.ConfirmResetPasswordCode)]
+        public async Task<IActionResult> ConfirmResetPasswordCode([FromBody] ConfirmResetPasswordQuery query)
         {
             var response = await Mediator.Send(query);
             return NewResult(response);
@@ -71,14 +72,22 @@ namespace API.Controllers.Auth
 
         [AllowAnonymous]
         [HttpPost(Router.Authentication.ResetPassword)]
-        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordCommand command)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
         {
             var response = await Mediator.Send(command);
             return NewResult(response);
         }
 
+        [AllowAnonymous]
+        [HttpPost(Router.Authentication.TwoStepVerification)]
+        public async Task<IActionResult> TwoStepVerification([FromBody] TwoStepVerificationQuery query)
+        {
+            var response = await Mediator.Send(query);
+            return NewResult(response);
+        }
+
         [HttpPost(Router.Authentication.Logout)]
-        public async Task<IActionResult> Logout([FromForm] LogoutCommand command)
+        public async Task<IActionResult> Logout([FromBody] LogoutCommand command)
         {
             var response = await Mediator.Send(command);
             return NewResult(response);

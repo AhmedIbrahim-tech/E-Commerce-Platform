@@ -51,9 +51,14 @@ public class AdminConfiguration : IEntityTypeConfiguration<Admin>
         builder.Property(a => a.DeletedBy)
             .ConfigureGuid(isRequired: false);
 
-        // Index for AppUserId lookup
         builder.HasIndex(a => a.AppUserId)
             .HasDatabaseName("ix_admins_app_user_id")
             .IsUnique();
+
+        builder.HasIndex(a => a.FullName)
+            .HasDatabaseName("ix_admins_full_name");
+
+        builder.HasIndex(a => a.CreatedTime)
+            .HasDatabaseName("ix_admins_created_time");
     }
 }

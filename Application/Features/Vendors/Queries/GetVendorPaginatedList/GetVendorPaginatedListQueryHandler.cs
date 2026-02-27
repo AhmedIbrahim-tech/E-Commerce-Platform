@@ -2,21 +2,22 @@ using Application.Common.Bases;
 using Application.ServicesHandlers.Services;
 using Application.Wrappers;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Vendors.Queries.GetVendorPaginatedList;
 
 public class GetVendorPaginatedListQueryHandler(
-    ApplicationDbContext dbContext,
+    IUnitOfWork unitOfWork,
     UserManager<AppUser> userManager,
     IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<GetVendorPaginatedListQuery, PaginatedResult<GetVendorPaginatedListResponse>>
 {
     public async Task<PaginatedResult<GetVendorPaginatedListResponse>> Handle(GetVendorPaginatedListQuery request, CancellationToken cancellationToken)
     {
-        var vendorsQuery = dbContext.Vendors
+        var vendorsQuery = unitOfWork.Vendors.GetTableNoTracking()
             .IgnoreQueryFilters()
-            .AsNoTracking()
-            .AsQueryable()
             .ApplyFiltering(request.SortBy, request.Search);
 
         var vendorsWithAppUsers = await vendorsQuery
@@ -30,14 +31,37 @@ public class GetVendorPaginatedListQueryHandler(
                 })
             .ToPaginatedListAsync(request.PageNumber, request.PageSize);
 
-        var userIds = vendorsWithAppUsers.Data.Select(x => x.AppUser.Id).ToList();
-        var userRolesDict = new Dictionary<Guid, string>();
-        
-        foreach (var item in vendorsWithAppUsers.Data)
+        if (!vendorsWithAppUsers.Data.Any())
         {
-            var roles = await userManager.GetRolesAsync(item.AppUser);
-            userRolesDict[item.AppUser.Id] = roles.FirstOrDefault() ?? string.Empty;
+            return new PaginatedResult<GetVendorPaginatedListResponse>(new List<GetVendorPaginatedListResponse>())
+            {
+                CurrentPage = request.PageNumber,
+                TotalPages = 0,
+                TotalCount = 0,
+                PageSize = request.PageSize,
+                Succeeded = true
+            };
         }
+
+        var userIds = vendorsWithAppUsers.Data.Select(x => x.AppUser.Id).ToList();
+        
+        var userRoleIds = await (from ur in unitOfWork.Context.Set<Microsoft.AspNetCore.Identity.IdentityUserRole<Guid>>()
+                                  where userIds.Contains(ur.UserId)
+                                  select new { ur.UserId, ur.RoleId })
+                                  .ToListAsync(cancellationToken);
+
+        var roleIds = userRoleIds.Select(x => x.RoleId).Distinct().ToList();
+        var rolesDict = await unitOfWork.Context.Set<AppRole>()
+            .AsNoTracking()
+            .Where(r => roleIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => r.Name ?? string.Empty, cancellationToken);
+
+        var userRolesDict = userRoleIds
+            .GroupBy(x => x.UserId)
+            .ToDictionary(
+                g => g.Key,
+                g => rolesDict.GetValueOrDefault(g.First().RoleId, string.Empty)
+            );
 
         var responses = vendorsWithAppUsers.Data.Select(item => new GetVendorPaginatedListResponse
         {

@@ -1660,6 +1660,12 @@ namespace Infrastructure.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_admins_app_user_id");
 
+                    b.HasIndex("CreatedTime")
+                        .HasDatabaseName("ix_admins_created_time");
+
+                    b.HasIndex("FullName")
+                        .HasDatabaseName("ix_admins_full_name");
+
                     b.ToTable("Admins");
                 });
 
@@ -1718,6 +1724,12 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("AppUserId")
                         .IsUnique()
                         .HasDatabaseName("ix_customers_app_user_id");
+
+                    b.HasIndex("CreatedTime")
+                        .HasDatabaseName("ix_customers_created_time");
+
+                    b.HasIndex("FullName")
+                        .HasDatabaseName("ix_customers_full_name");
 
                     b.ToTable("Customers");
                 });
@@ -1785,6 +1797,15 @@ namespace Infrastructure.Data.Migrations
                     b.HasIndex("AppUserId")
                         .IsUnique()
                         .HasDatabaseName("ix_vendors_app_user_id");
+
+                    b.HasIndex("CreatedTime")
+                        .HasDatabaseName("ix_vendors_created_time");
+
+                    b.HasIndex("FullName")
+                        .HasDatabaseName("ix_vendors_full_name");
+
+                    b.HasIndex("StoreName")
+                        .HasDatabaseName("ix_vendors_store_name");
 
                     b.ToTable("Vendors");
                 });

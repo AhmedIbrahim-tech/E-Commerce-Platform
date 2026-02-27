@@ -18,7 +18,6 @@ public class PlaceOrderCommandHandler(
     INotificationService notificationService,
     ICurrentUserService currentUserService,
     PaymobSettings paymobSettings,
-    ApplicationDbContext dbContext,
     UserManager<AppUser> userManager) : ApiResponseHandler(),
     IRequestHandler<PlaceOrderCommand, ApiResponse<PaymentProcessResponse>>
 {
@@ -88,7 +87,7 @@ public class PlaceOrderCommandHandler(
                 await unitOfWork.Orders.UpdateAsync(order, cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                unitOfWork.Context.AuditLogs.Add(new AuditLog(
+                await unitOfWork.AuditLogs.AddAsync(new AuditLog(
                     eventType: "Orders",
                     eventName: "OrderPlaced",
                     description: $"Order {order.Id} placed",
@@ -99,7 +98,7 @@ public class PlaceOrderCommandHandler(
                         entityType = "order",
                         entityId = order.Id,
                         status = order.Status.ToString()
-                    })));
+                    })), cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 await unitOfWork.CommitTransactionAsync(cancellationToken);
@@ -110,7 +109,7 @@ public class PlaceOrderCommandHandler(
             try
             {
                 var shippingAddress = order.ShippingAddress;
-                var customer = await dbContext.Customers
+                var customer = await unitOfWork.Customers.GetTableNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == order.CustomerId, cancellationToken);
                 
                 if (customer is null)
@@ -202,7 +201,7 @@ public class PlaceOrderCommandHandler(
                     new NotificationRecipients(CustomerIds: new[] { currentUserService.GetUserId() }),
                     cancellationToken);
 
-                unitOfWork.Context.AuditLogs.Add(new AuditLog(
+                await unitOfWork.AuditLogs.AddAsync(new AuditLog(
                     eventType: "Orders",
                     eventName: "OrderPlaced",
                     description: $"Order {order.Id} placed",
@@ -213,7 +212,7 @@ public class PlaceOrderCommandHandler(
                         entityType = "order",
                         entityId = order.Id,
                         status = order.Status.ToString()
-                    })));
+                    })), cancellationToken);
                 await unitOfWork.SaveChangesAsync(cancellationToken);
 
                 await unitOfWork.CommitTransactionAsync(cancellationToken);

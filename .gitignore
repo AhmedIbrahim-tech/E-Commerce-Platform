@@ -368,3 +368,6 @@ FodyWeavers.xsd
 # Cursor IDE files
 .Files/
 .cursorrules
+
+# Large files
+client.rar

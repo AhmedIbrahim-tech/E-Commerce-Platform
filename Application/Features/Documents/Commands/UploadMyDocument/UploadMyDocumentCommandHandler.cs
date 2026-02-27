@@ -25,9 +25,6 @@ public class UploadMyDocumentCommandHandler(
     {
         var userId = currentUserService.GetUserId();
 
-        if (string.IsNullOrWhiteSpace(request.Type))
-            return BadRequest<UploadMyDocumentResponse>("Document type is required");
-
         if (request.File == null || request.File.Length == 0)
             return BadRequest<UploadMyDocumentResponse>("File is required");
 
@@ -46,7 +43,7 @@ public class UploadMyDocumentCommandHandler(
         {
             var document = new Document(
                 userId: userId,
-                type: request.Type,
+                type: request.Type ?? "General",
                 fileName: Path.GetFileName(request.File.FileName),
                 contentType: request.File.ContentType,
                 size: request.File.Length);

@@ -2,44 +2,33 @@ using Application.Common.Bases;
 using Application.Common.Constants;
 using Application.Common.Errors;
 using Application.ServicesHandlers.Services;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Features.Vendors.Commands.EditVendor;
 
-public class EditVendorCommandHandler : ApiResponseHandler,
+public class EditVendorCommandHandler(
+    IUnitOfWork unitOfWork,
+    UserManager<AppUser> userManager,
+    IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<EditVendorCommand, ApiResponse<string>>
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly IFileUploadService _fileUploadService;
-
-    public EditVendorCommandHandler(
-        ApplicationDbContext dbContext, 
-        UserManager<AppUser> userManager,
-        IFileUploadService fileUploadService) : base()
-    {
-        _dbContext = dbContext;
-        _userManager = userManager;
-        _fileUploadService = fileUploadService;
-    }
-
     public async Task<ApiResponse<string>> Handle(EditVendorCommand request, CancellationToken cancellationToken)
     {
-        var vendor = await _dbContext.Vendors
+        var vendor = await unitOfWork.Vendors.GetTableAsTracking()
             .FirstOrDefaultAsync(v => v.Id == request.Id, cancellationToken);
         
         if (vendor is null) return new ApiResponse<string>(VendorErrors.VendorNotFound());
 
-        var appUser = await _userManager.FindByIdAsync(vendor.AppUserId.ToString());
+        var appUser = await userManager.FindByIdAsync(vendor.AppUserId.ToString());
         if (appUser is null) return new ApiResponse<string>(UserErrors.UserNotFound());
 
-        var isUserNameDuplicate = await _userManager.UserNameExistsAsync(request.UserName!, vendor.AppUserId);
+        var isUserNameDuplicate = await userManager.UserNameExistsAsync(request.UserName!, vendor.AppUserId);
         if (isUserNameDuplicate)
             return new ApiResponse<string>(UserErrors.DuplicatedEmail());
 
-        var isEmailDuplicate = await _userManager.EmailExistsAsync(request.Email!, vendor.AppUserId);
+        var isEmailDuplicate = await userManager.EmailExistsAsync(request.Email!, vendor.AppUserId);
         if (isEmailDuplicate)
             return new ApiResponse<string>(UserErrors.DuplicatedEmail());
 
@@ -54,8 +43,8 @@ public class EditVendorCommandHandler : ApiResponseHandler,
 
         if (request.ProfileImage != null)
         {
-            await _fileUploadService.TryDeleteFileAsync(appUser.ProfileImage, cancellationToken);
-            var profileImageUrls = await _fileUploadService.UploadAndGetUrlsAsync(
+            await fileUploadService.TryDeleteFileAsync(appUser.ProfileImage, cancellationToken);
+            var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
                 new[] { request.ProfileImage },
                 FileLocations.Users,
                 appUser.Id,
@@ -79,11 +68,11 @@ public class EditVendorCommandHandler : ApiResponseHandler,
         vendor.ChangePhoneNumber(request.PhoneNumber, vendor.AppUserId);
         vendor.ChangeSecondPhoneNumber(request.SecondPhoneNumber, vendor.AppUserId);
 
-        var updateAppUserResult = await _userManager.UpdateAsync(appUser);
+        var updateAppUserResult = await userManager.UpdateAsync(appUser);
         if (!updateAppUserResult.Succeeded)
             return new ApiResponse<string>(VendorErrors.InvalidVendorData());
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
         return Edit("");
     }
 }

@@ -4,20 +4,7 @@ public interface IRefreshTokenRepository : IGenericRepositoryAsync<RefreshToken>
 {
 }
 
-public class RefreshTokenRepository : GenericRepositoryAsync<RefreshToken>, IRefreshTokenRepository
+public class RefreshTokenRepository(ApplicationDbContext dbContext) 
+    : GenericRepositoryAsync<RefreshToken>(dbContext), IRefreshTokenRepository
 {
-    #region Fields
-    private readonly DbSet<RefreshToken> _refreshTokens;
-    #endregion
-
-    #region Constructors
-    public RefreshTokenRepository(ApplicationDbContext dbContext) : base(dbContext)
-    {
-        _refreshTokens = dbContext.Set<RefreshToken>();
-    }
-    #endregion
-
-    #region Handle Functions
-
-    #endregion
 }

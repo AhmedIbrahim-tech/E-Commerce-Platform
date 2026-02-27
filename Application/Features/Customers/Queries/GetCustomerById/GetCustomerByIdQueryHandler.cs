@@ -1,30 +1,23 @@
 using Application.Common.Bases;
 using Application.Common.Errors;
-using Infrastructure.Data;
 using Infrastructure.Data.Identity;
+using Infrastructure.RepositoriesHandlers.UnitOfWork;
 
 namespace Application.Features.Customers.Queries.GetCustomerById;
 
-public class GetCustomerByIdQueryHandler : ApiResponseHandler,
+public class GetCustomerByIdQueryHandler(
+    IUnitOfWork unitOfWork,
+    UserManager<AppUser> userManager) : ApiResponseHandler(),
     IRequestHandler<GetCustomerByIdQuery, ApiResponse<GetCustomerByIdResponse>>
 {
-    private readonly ApplicationDbContext _dbContext;
-    private readonly UserManager<AppUser> _userManager;
-
-    public GetCustomerByIdQueryHandler(ApplicationDbContext dbContext, UserManager<AppUser> userManager) : base()
-    {
-        _dbContext = dbContext;
-        _userManager = userManager;
-    }
-
     public async Task<ApiResponse<GetCustomerByIdResponse>> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
     {
-        var customer = await _dbContext.Customers
+        var customer = await unitOfWork.Customers.GetTableNoTracking()
             .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
         
         if (customer is null) return new ApiResponse<GetCustomerByIdResponse>(CustomerErrors.CustomerNotFound());
 
-        var appUser = await _userManager.FindByIdAsync(customer.AppUserId.ToString());
+        var appUser = await userManager.FindByIdAsync(customer.AppUserId.ToString());
         if (appUser is null) return new ApiResponse<GetCustomerByIdResponse>(UserErrors.UserNotFound());
 
         var customerResponse = new GetCustomerByIdResponse

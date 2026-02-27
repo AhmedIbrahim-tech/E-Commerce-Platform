@@ -5,7 +5,7 @@ public static class Roles
     public const string SuperAdmin = "SuperAdmin";
     public const string Admin = "Admin";
     public const string Merchant = "Merchant";
-    public const string Vendor = Merchant;
+    public const string StaffMerchant = "StaffMerchant";
     public const string Customer = "Customer";
 
     public static List<string> GetAll()
@@ -15,6 +15,7 @@ public static class Roles
             SuperAdmin,
             Admin,
             Merchant,
+            StaffMerchant,
             Customer
         };
     }

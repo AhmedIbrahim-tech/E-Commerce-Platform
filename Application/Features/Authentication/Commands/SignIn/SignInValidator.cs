@@ -4,11 +4,6 @@ public class SignInValidator : AbstractValidator<SignInCommand>
 {
     public SignInValidator()
     {
-        ApplyValidationRoles();
-    }
-
-    public void ApplyValidationRoles()
-    {
         RuleFor(c => c.Email)
             .NotEmpty().WithMessage("Email cannot be empty")
             .NotNull().WithMessage("Email is required")

@@ -1,28 +1,22 @@
+using Application.Common.Constants;
 using Application.Common.Helpers;
 
 namespace Application.Features.Authentication.Commands.GoogleLogin;
 
-public class GoogleLoginCommandHandler : ApiResponseHandler,
+public class GoogleLoginCommandHandler(IAuthGoogleService authGoogleService) : ApiResponseHandler(),
     IRequestHandler<GoogleLoginCommand, ApiResponse<JwtAuthResponse>>
 {
-    private readonly IAuthGoogleService _authGoogleService;
-
-    public GoogleLoginCommandHandler(IAuthGoogleService authGoogleService) : base()
-    {
-        _authGoogleService = authGoogleService;
-    }
-
     public async Task<ApiResponse<JwtAuthResponse>> Handle(GoogleLoginCommand request, CancellationToken cancellationToken)
     {
-        var (response, message) = await _authGoogleService.AuthenticateWithGoogleAsync(request.IdToken);
+        var (response, message) = await authGoogleService.AuthenticateWithGoogleAsync(request.IdToken);
         return message switch
         {
-            "Success" => Success(response),
+            AuthenticationResult.Success => Success(response),
             "InvalidGoogleToken" => new ApiResponse<JwtAuthResponse>(AuthenticationErrors.SocialLoginFailed()),
             "FailedToAddNewRoles" => new ApiResponse<JwtAuthResponse>(RoleErrors.InvalidPermissions()),
             "FailedToAddNewClaims" => new ApiResponse<JwtAuthResponse>(PermissionErrors.PermissionNotAssigned()),
             "GoogleAuthenticationFailed" => new ApiResponse<JwtAuthResponse>(AuthenticationErrors.SocialLoginFailed()),
-            _ => new ApiResponse<JwtAuthResponse>(AuthenticationErrors.SocialLoginFailed()),
+            _ => new ApiResponse<JwtAuthResponse>(AuthenticationErrors.SocialLoginFailed())
         };
     }
 }

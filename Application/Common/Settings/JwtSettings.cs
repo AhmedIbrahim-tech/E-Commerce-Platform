@@ -11,4 +11,5 @@ public class JwtSettings
     public bool ValidateIssuerSigningKey { get; set; }
     public int AccessTokenExpireDate { get; set; }
     public int RefreshTokenExpireDate { get; set; }
+    public int RefreshTokenExpireDateRememberMe { get; set; } = 30;
 }

@@ -1,7 +1,5 @@
-using Application.Features.ApplicationUser.Commands.AddCustomer;
 using Application.Features.ApplicationUser.Commands.AddAdmin;
 using Application.Features.ApplicationUser.Commands.AddVendor;
-using Application.Features.ApplicationUser.Commands.ChangeUserPassword;
 using Application.Features.ApplicationUser.Commands.EditMyProfile;
 using Application.Features.ApplicationUser.Commands.ToggleUserStatus;
 using Application.Features.ApplicationUser.Queries.GetMyProfile;
@@ -14,22 +12,6 @@ namespace API.Controllers.Users;
 [Authorize]
 public class ApplicationUserController : AppControllerBase
 {
-    [AllowAnonymous]
-    [HttpPost(Router.UserRouting.Register)]
-    public async Task<IActionResult> Register([FromBody] AddCustomerCommand command)
-    {
-        var response = await Mediator.Send(command);
-        return NewResult(response);
-    }
-
-    [Authorize(Policy = Policies.Auth.ChangePassword)]
-    [HttpPut(Router.UserRouting.ChangePassword)]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangeUserPasswordCommand command)
-    {
-        var response = await Mediator.Send(command);
-        return NewResult(response);
-    }
-
     [Authorize(Policy = Policies.Auth.ViewOwnProfile)]
     [HttpGet(Router.UserRouting.Profile)]
     public async Task<IActionResult> GetMyProfile()

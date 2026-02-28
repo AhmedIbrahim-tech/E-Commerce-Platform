@@ -387,16 +387,24 @@ const components: any = (theme: Theme) => {
     MuiAlert: {
       styleOverrides: {
         filledSuccess: {
+          backgroundColor: theme.palette.success.main,
           color: "white",
-        },
-        filledInfo: {
-          color: "white",
+          "& .MuiAlert-icon": { color: "white" },
         },
         filledError: {
+          backgroundColor: theme.palette.error.main,
           color: "white",
+          "& .MuiAlert-icon": { color: "white" },
         },
         filledWarning: {
+          backgroundColor: theme.palette.warning.main,
           color: "white",
+          "& .MuiAlert-icon": { color: "white" },
+        },
+        filledInfo: {
+          backgroundColor: theme.palette.info.main,
+          color: "white",
+          "& .MuiAlert-icon": { color: "white" },
         },
         standardSuccess: {
           backgroundColor: theme.palette.success.light,
@@ -431,7 +439,7 @@ const components: any = (theme: Theme) => {
           color: theme.palette.info.main,
         },
         successIcon: {
-          color: theme.palette.info.main,
+          color: theme.palette.success.main,
         },
       },
     },

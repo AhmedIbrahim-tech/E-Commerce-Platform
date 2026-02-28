@@ -1,15 +1,24 @@
+'use client';
+
 import { useCustomizer } from '@/hooks/useCustomizer';
 import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mui/material';
-
 import { IconPower } from '@tabler/icons-react';
-import Link from 'next/link';
-import { useContext } from 'react';
+import { useDispatch } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { AppDispatch } from '@/store/store';
+import { logoutAsync } from '@/store/slices/authSlice';
 
 export const Profile = () => {
   const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
-
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
   const { isSidebarHover, isCollapse } = useCustomizer();
   const hideMenu = lgUp ? isCollapse == 'mini-sidebar' && !isSidebarHover : '';
+
+  const handleLogout = () => {
+    dispatch(logoutAsync()).then(() => router.push('/login'));
+  };
+
   return (
     <Box
       display={'flex'}
@@ -29,8 +38,7 @@ export const Profile = () => {
             <Tooltip title="Logout" placement="top">
               <IconButton
                 color="primary"
-                component={Link}
-                href="/login"
+                onClick={handleLogout}
                 aria-label="logout"
                 size="small"
               >

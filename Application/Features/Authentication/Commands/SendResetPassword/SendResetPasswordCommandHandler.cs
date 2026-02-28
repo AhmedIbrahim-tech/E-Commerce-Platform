@@ -1,24 +1,18 @@
+using Application.Common.Constants;
 using Application.ServicesHandlers.Services;
 
 namespace Application.Features.Authentication.Commands.SendResetPassword;
 
-public class SendResetPasswordCommandHandler : ApiResponseHandler,
+public class SendResetPasswordCommandHandler(IAuthenticationService authenticationService) : ApiResponseHandler(),
     IRequestHandler<SendResetPasswordCommand, ApiResponse<string>>
 {
-    private readonly IAuthenticationService _authenticationService;
-
-    public SendResetPasswordCommandHandler(IAuthenticationService authenticationService) : base()
-    {
-        _authenticationService = authenticationService;
-    }
-
     public async Task<ApiResponse<string>> Handle(SendResetPasswordCommand request, CancellationToken cancellationToken)
     {
-        var resetPasswordResult = await _authenticationService.SendResetPasswordCodeAsync(request.Email);
-        return resetPasswordResult switch
+        var result = await authenticationService.SendResetPasswordCodeAsync(request.Email);
+        return result switch
         {
-            AuthenticationService.ResultSuccess => Success(""),
-            AuthenticationService.ResultUserNotFound => new ApiResponse<string>(UserErrors.UserNotFound()),
+            AuthenticationResult.Success => Success(""),
+            AuthenticationResult.UserNotFound => new ApiResponse<string>(UserErrors.UserNotFound()),
             _ => new ApiResponse<string>(EmailErrors.EmailSendFailed())
         };
     }

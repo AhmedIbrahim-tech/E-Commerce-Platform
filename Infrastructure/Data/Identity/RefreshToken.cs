@@ -1,16 +1,11 @@
 namespace Infrastructure.Data.Identity;
+
 public class RefreshToken
 {
     public Guid Id { get; private set; } = Guid.NewGuid();
-
-    // FK to Identity user
     public Guid AppUserId { get; private set; }
     public AppUser AppUser { get; private set; } = null!;
-
-    // Stored token (preferably HASH in real production)
     public string Token { get; private set; } = null!;
-
-    // JWT Id this refresh token was issued for
     public string JwtId { get; private set; } = null!;
 
     public bool IsUsed { get; private set; }
@@ -24,7 +19,7 @@ public class RefreshToken
 
     private RefreshToken() { }
 
-    public RefreshToken(Guid appUserId,string token,string jwtId,DateTimeOffset expiresAt)
+    public RefreshToken(Guid appUserId, string token, string jwtId, DateTimeOffset expiresAt)
     {
         AppUserId = appUserId;
         Token = token;

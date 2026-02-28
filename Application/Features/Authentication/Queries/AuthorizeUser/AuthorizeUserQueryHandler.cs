@@ -1,25 +1,15 @@
-
 using Application.Common.Bases;
 using Application.Common.Errors;
 
 namespace Application.Features.Authentication.AuthorizeUser;
 
-public class AuthorizeUserQueryHandler : ApiResponseHandler,
+public class AuthorizeUserQueryHandler(IAuthenticationService authenticationService) : ApiResponseHandler(),
     IRequestHandler<AuthorizeUserQuery, ApiResponse<string>>
 {
-    private readonly IAuthenticationService _authenticationService;
-
-    public AuthorizeUserQueryHandler(IAuthenticationService authenticationService) : base()
-    {
-        _authenticationService = authenticationService;
-    }
-
     public async Task<ApiResponse<string>> Handle(AuthorizeUserQuery request, CancellationToken cancellationToken)
     {
-        var (isValid, message) = await _authenticationService.ValidateToken(request.AccessToken);
-        if (isValid)
-            return Success(message);
-        return new ApiResponse<string>(UserErrors.InvalidJwtToken());
+        var (isValid, message) = await authenticationService.ValidateToken(request.AccessToken);
+        return isValid ? Success(message) : new ApiResponse<string>(UserErrors.InvalidJwtToken());
     }
 }
 

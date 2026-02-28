@@ -29,6 +29,7 @@ public static class ModuleApplicationDependencies
         services.AddTransient<IDefaultClaimsService, DefaultClaimsService>();
         services.AddTransient<IUserCreationService, UserCreationService>();
         services.AddTransient<IAuditService, AuditService>();
+        services.AddTransient<IUserStatusService, UserStatusService>();
         services.AddTransient<ILookUpsService, LookUpsService>();
         services.AddTransient<INotificationService, NotificationService>();
 

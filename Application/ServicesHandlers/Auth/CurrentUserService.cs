@@ -1,5 +1,3 @@
-using Infrastructure.Data.Identity;
-
 namespace Application.ServicesHandlers.Auth;
 
 public interface ICurrentUserService
@@ -65,11 +63,11 @@ public class CurrentUserService : ICurrentUserService
     public async Task<User> GetUserAsync()
     {
         Guid userId = GetUserId();
-        
+
         // Get Identity user
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) throw new UnauthorizedAccessException();
-        
+
         // Get domain entity (try Customer, Vendor, Admin)
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(c => c.AppUserId == appUser.Id);
         if (customer != null)
@@ -82,7 +80,7 @@ public class CurrentUserService : ICurrentUserService
                 Gender = customer.Gender
             };
         }
-        
+
         var vendor = await _dbContext.Vendors.FirstOrDefaultAsync(v => v.AppUserId == appUser.Id);
         if (vendor != null)
         {
@@ -94,7 +92,7 @@ public class CurrentUserService : ICurrentUserService
                 Gender = vendor.Gender
             };
         }
-        
+
         var admin = await _dbContext.Admins.FirstOrDefaultAsync(a => a.AppUserId == appUser.Id);
         if (admin != null)
         {
@@ -106,7 +104,7 @@ public class CurrentUserService : ICurrentUserService
                 Gender = admin.Gender
             };
         }
-        
+
         // If no domain entity found, return basic User with data from AppUser
         return new User
         {
@@ -122,7 +120,7 @@ public class CurrentUserService : ICurrentUserService
         Guid userId = GetUserId();
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) throw new UnauthorizedAccessException();
-        
+
         var roles = await _userManager.GetRolesAsync(appUser);
         return roles.ToList();
     }

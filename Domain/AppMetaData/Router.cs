@@ -22,6 +22,8 @@ namespace Domain.AppMetaData
             public const string TwoStepVerification = Prefix + "twoStepVerification";
             public const string Logout = Prefix + "logout";
             public const string LogoutAll = Prefix + "logoutAll";
+            public const string Register = Prefix + "register";
+            public const string ChangePassword = Prefix + "changePassword";
         }
 
         public static class Authorization
@@ -43,17 +45,9 @@ namespace Domain.AppMetaData
         public static class UserRouting
         {
             public const string Prefix = Rule + "user/";
-            public const string Register = Prefix + "register";
             public const string Profile = Prefix + "profile";
-            public const string ChangePassword = Prefix + "changePassword";
             public const string CreateAdmin = Prefix + "createAdmin";
             public const string CreateVendor = Prefix + "createVendor";
-
-            public const string MyActivitiesPaginated = Prefix + "activities/paginated";
-
-            public const string Documents = Prefix + "documents";
-            public const string DocumentById = Prefix + "documents/" + SingleRoute;
-            public const string DocumentDownload = Prefix + "documents/" + SingleRoute + "/download";
 
             // Unified Users Management
             public const string UsersPaginated = Prefix + "users/paginated";

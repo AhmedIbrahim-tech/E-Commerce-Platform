@@ -1,4 +1,4 @@
-import { IconPoint, IconAperture, IconBoxMultiple, IconApps, IconShoppingCart, IconUserCircle } from "@tabler/icons-react";
+import { IconPoint, IconAperture, IconBoxMultiple, IconApps, IconShoppingCart, IconUserCircle, IconList } from "@tabler/icons-react";
 import { uniqueId } from "lodash";
 
 interface MenuitemsType {
@@ -26,6 +26,12 @@ const Menuitems: MenuitemsType[] = [
     title: "Dashboard",
     icon: IconAperture,
     href: "/admin",
+  },
+  {
+    id: uniqueId(),
+    title: "Order Table",
+    icon: IconList,
+    href: "/order-table",
   },
   {
     navlabel: true,

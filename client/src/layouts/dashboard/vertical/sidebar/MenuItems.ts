@@ -63,6 +63,7 @@ import {
   IconBoxAlignLeft,
   IconBorderStyle2,
   IconAppWindow,
+  IconList,
 } from "@tabler/icons-react";
 
 const Menuitems: MenuitemsType[] = [
@@ -75,6 +76,12 @@ const Menuitems: MenuitemsType[] = [
     title: "Dashboard",
     icon: IconAperture,
     href: "/admin",
+  },
+  {
+    id: uniqueId(),
+    title: "Order Table",
+    icon: IconList,
+    href: "/order-table",
   },
   {
     navlabel: true,

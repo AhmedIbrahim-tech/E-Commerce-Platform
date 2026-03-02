@@ -1,0 +1,147 @@
+/* Table List – shared styles for Order Table and all table-list pages */
+
+.table-list-root {
+  width: 100%;
+}
+
+.table-list-breadcrumb-card {
+  border-radius: 8px;
+  margin-bottom: 24px;
+  background-color: #ecf2ff;
+}
+
+[data-mui-color-scheme="dark"] .table-list-breadcrumb-card {
+  background-color: rgba(93, 135, 255, 0.12);
+}
+
+.table-list-breadcrumb-card .MuiCardContent-root {
+  padding: 30px 25px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.table-list-stats-title {
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.table-list-stats-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.table-list-stat-card {
+  min-width: 140px;
+  border-radius: 8px;
+  transition: box-shadow 0.2s ease;
+}
+
+.table-list-stat-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.table-list-stat-card .MuiCardContent-root {
+  padding: 16px 20px;
+}
+
+.table-list-table-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-list-table-card .MuiCardContent-root {
+  padding: 24px;
+}
+
+.table-list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.table-list-toolbar .MuiTextField-root {
+  margin-right: 8px;
+}
+
+.table-list-toolbar .MuiIconButton-root {
+  padding: 8px;
+}
+
+.table-list-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--mui-palette-divider, #e5eaef);
+}
+
+.table-list-table {
+  min-width: 100%;
+  white-space: nowrap;
+}
+
+.table-list-table .MuiTableHead-root .MuiTableRow-root {
+  background-color: var(--mui-palette-grey-50, #f2f6fa);
+}
+
+.table-list-table .MuiTableHead-root .MuiTableCell-root {
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--mui-palette-divider, #e5eaef);
+}
+
+.table-list-table .MuiTableBody-root .MuiTableRow-root {
+  transition: background-color 0.15s ease;
+}
+
+.table-list-table .MuiTableBody-root .MuiTableRow-root:hover {
+  background-color: var(--mui-palette-action-hover, rgba(0, 0, 0, 0.04));
+}
+
+.table-list-table .MuiTableBody-root .MuiTableCell-root {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--mui-palette-divider, #e5eaef);
+}
+
+.table-list-table .MuiTableBody-root .MuiTableRow-root:last-child .MuiTableCell-root {
+  border-bottom: none;
+}
+
+.table-list-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--mui-palette-text-secondary, #5A6A85);
+}
+
+.table-list-pagination {
+  margin-top: 16px;
+  border-top: 1px solid var(--mui-palette-divider, #e5eaef);
+  padding-top: 16px;
+}
+
+.table-list-pagination .MuiTablePagination-root {
+  overflow: visible;
+}
+
+.table-list-pagination .MuiTablePagination-toolbar {
+  padding-right: 0;
+}
+
+.table-list-actions-cell {
+  white-space: nowrap;
+}
+
+.table-list-actions-cell .MuiIconButton-root {
+  padding: 6px;
+}
+
+.table-list-actions-cell .MuiIconButton-root:hover {
+  background-color: var(--mui-palette-action-hover, rgba(0, 0, 0, 0.04));
+}

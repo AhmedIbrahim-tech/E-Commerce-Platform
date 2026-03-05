@@ -1,5 +1,5 @@
 {
-  "name": "modernize-next-starterkit",
+  "name": "tajerly",
   "version": "5.0.0",
   "private": true,
   "scripts": {
@@ -44,6 +44,7 @@
     "react-redux": "^9.2.0",
     "react-spring": "^10.0.3",
     "react-syntax-highlighter": "^16.1.0",
+    "redux-persist": "^6.0.0",
     "simplebar-react": "^3.3.2",
     "stylis-plugin-rtl": "^2.1.1",
     "typescript": "^5.9.3",
@@ -57,6 +58,7 @@
     "@types/react-dom": "18",
     "@types/react-helmet": "^6.1.11",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "baseline-browser-mapping": "^2.10.0",
     "eslint": "latest",
     "eslint-config-next": "latest"
   }

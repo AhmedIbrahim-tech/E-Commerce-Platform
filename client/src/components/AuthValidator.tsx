@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { validateToken, logout } from '@/store/slices/authSlice';
 
 export default function AuthValidator({ children }: { children: React.ReactNode }) {
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         const accessToken = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;

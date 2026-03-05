@@ -1,10 +1,21 @@
 using Application.Common.DTOs;
 using Domain.Enums;
+using Infrastructure.Data.Identity;
+using Microsoft.AspNetCore.Identity;
 
 namespace Application.ServicesHandlers.Services;
 
-public class LookUpsService(IUnitOfWork unitOfWork) : ILookUpsService
+public class LookUpsService(IUnitOfWork unitOfWork, RoleManager<AppRole> roleManager) : ILookUpsService
 {
+    private static string GetRoleDisplayName(string name) => name switch
+    {
+        "SuperAdmin" => "Super Admin",
+        "Admin" => "Admin",
+        "Merchant" => "Merchant",
+        "StaffMerchant" => "Staff Merchant",
+        "Customer" => "Customer",
+        _ => name
+    };
     public async Task<List<BaseLookupDto>> GetCategoriesAsync(CancellationToken cancellationToken = default)
     {
         return await unitOfWork.Categories.GetTableNoTracking()
@@ -85,14 +96,18 @@ public class LookUpsService(IUnitOfWork unitOfWork) : ILookUpsService
 
     public async Task<List<RoleLookupDto>> GetRolesAsync(CancellationToken cancellationToken = default)
     {
-        return new List<RoleLookupDto>
-        {
-            new RoleLookupDto { Name = "SuperAdmin", DisplayName = "Super Admin" },
-            new RoleLookupDto { Name = "Admin", DisplayName = "Admin" },
-            new RoleLookupDto { Name = "Merchant", DisplayName = "Merchant" },
-            new RoleLookupDto { Name = "StaffMerchant", DisplayName = "Staff Merchant" },
-            new RoleLookupDto { Name = "Customer", DisplayName = "Customer" }
-        };
+        var roles = await roleManager.Roles
+            .OrderBy(r => r.Name)
+            .Select(r => new { r.Id, r.Name })
+            .ToListAsync(cancellationToken);
+        return roles
+            .Select(r => new RoleLookupDto
+            {
+                Id = r.Id,
+                Name = r.Name ?? string.Empty,
+                DisplayName = GetRoleDisplayName(r.Name ?? string.Empty)
+            })
+            .ToList();
     }
 
     public async Task<List<BaseLookupDto>> GetTagsAsync(CancellationToken cancellationToken = default)

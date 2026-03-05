@@ -1,118 +1,66 @@
 import { uniqueId } from "lodash";
 
 interface MenuitemsType {
-  [x: string]: any;
-  id?: string;
-  navlabel?: boolean;
-  subheader?: string;
-  title?: string;
-  icon?: any;
-  href?: string;
-  children?: MenuitemsType[];
-  chip?: string;
-  chipColor?: string;
-  variant?: string;
-  external?: boolean;
+    [x: string]: any;
+    id?: string;
+    navlabel?: boolean;
+    subheader?: string;
+    title?: string;
+    icon?: any;
+    href?: string;
+    children?: MenuitemsType[];
+    chip?: string;
+    chipColor?: string;
+    variant?: string;
+    external?: boolean;
 }
 import {
-  IconAward,
-  IconBoxMultiple,
-  IconPoint,
-  IconAlertCircle,
-  IconNotes,
-  IconCalendar,
-  IconMail,
-  IconTicket,
-  IconEdit,
-  IconGitMerge,
-  IconCurrencyDollar,
-  IconApps,
-  IconFileDescription,
-  IconFileDots,
-  IconFiles,
-  IconBan,
-  IconStar,
-  IconMoodSmile,
-  IconBorderAll,
-  IconBorderHorizontal,
-  IconBorderInner,
-  IconBorderVertical,
-  IconBorderTop,
-  IconUserCircle,
-  IconPackage,
-  IconMessage2,
-  IconBasket,
-  IconChartLine,
-  IconChartArcs,
-  IconChartCandle,
-  IconChartArea,
-  IconChartDots,
-  IconChartDonut3,
-  IconChartRadar,
-  IconLogin,
-  IconUserPlus,
-  IconRotate,
-  IconBox,
-  IconShoppingCart,
-  IconAperture,
-  IconLayout,
-  IconSettings,
-  IconHelp,
-  IconZoomCode,
-  IconBoxAlignBottom,
-  IconBoxAlignLeft,
-  IconBorderStyle2,
-  IconAppWindow,
-  IconList,
+    IconAperture,
+    IconList,
+    IconUserCircle,
+    IconShieldLock,
 } from "@tabler/icons-react";
 
 const Menuitems: MenuitemsType[] = [
-  {
-    navlabel: true,
-    subheader: "Admin",
-  },
-  {
-    id: uniqueId(),
-    title: "Dashboard",
-    icon: IconAperture,
-    href: "/admin",
-  },
-  {
-    id: uniqueId(),
-    title: "Order Table",
-    icon: IconList,
-    href: "/order-table",
-  },
-  {
-    navlabel: true,
-    subheader: "Modules",
-  },
-  {
-    id: uniqueId(),
-    title: "Users Management",
-    icon: IconUserCircle,
-    href: "/users",
-    children: [
-      {
+    {
+        navlabel: true,
+        subheader: "Admin",
+    },
+    {
         id: uniqueId(),
-        title: "Users",
-        icon: IconUserCircle,
-        href: "/admin/users",
-      },
-      {
+        title: "Dashboard",
+        icon: IconAperture,
+        href: "/admin",
+    },
+    {
         id: uniqueId(),
-        title: "Roles",
-        icon: IconUserCircle,
-        href: "/admin/roles",
-      },
-      {
+        title: "Order Table",
+        icon: IconList,
+        href: "/order-table",
+    },
+    {
+        navlabel: true,
+        subheader: "Modules",
+    },
+    {
         id: uniqueId(),
-        title: "Permissions",
+        title: "Users Management",
         icon: IconUserCircle,
-        href: "/admin/permissions",
-      }
-    ]
-  },
+        children: [
+            {
+                id: uniqueId(),
+                title: "Users",
+                icon: IconUserCircle,
+                href: "/admin/users",
+            },
+            {
+                id: uniqueId(),
+                title: "Roles & Permissions",
+                icon: IconShieldLock,
+                href: "/admin/roles-permissions",
+            },
+        ],
+    },
 ];
 
 export default Menuitems;

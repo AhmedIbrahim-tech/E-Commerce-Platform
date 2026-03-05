@@ -3,9 +3,13 @@ import CustomSocialButton from "@/components/forms/theme-elements/CustomSocialBu
 import { Stack } from "@mui/system";
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
-import { signInType } from "@/types/auth/auth";
 
-const AuthSocialButtons = ({ title }: signInType) => (
+
+interface AuthSocialButtonsProps {
+  title?: string;
+}
+
+const AuthSocialButtons = ({ title }: AuthSocialButtonsProps) => (
   <>
     <Stack direction="row" justifyContent="center" spacing={2} mt={3}>
       <CustomSocialButton>

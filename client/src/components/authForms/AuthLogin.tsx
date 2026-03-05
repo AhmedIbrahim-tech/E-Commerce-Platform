@@ -16,11 +16,13 @@ import CustomCheckbox from '@/components/forms/theme-elements/CustomCheckbox';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
 import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
 import AuthSocialButtons from './AuthSocialButtons';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { loginUser } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 import { useNotify } from '@/context/NotifyContext';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { loginSchema } from '@/validation/auth.schema';
 
 interface AuthLoginProps {
   title?: string;
@@ -29,19 +31,23 @@ interface AuthLoginProps {
 }
 
 const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const { notify } = useNotify();
+  const { loading } = useAppSelector((state) => state.auth);
 
-  const { loading, error } = useSelector((state: RootState) => state.auth);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{ email: string; password: string }>({
+    resolver: yupResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const resultAction = await dispatch(loginUser({ email, password, rememberMe }));
+  const onSubmit = async (data: { email: string; password: string }) => {
+    const resultAction = await dispatch(loginUser({ email: data.email, password: data.password, rememberMe }));
 
     if (loginUser.fulfilled.match(resultAction)) {
       notify('Signed in successfully.', 'success');
@@ -51,13 +57,11 @@ const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
         router.push('/admin');
       } else if (roles.some((r) => r === 'Merchant' || r === 'StaffMerchant')) {
         router.push('/merchant');
-      } else if (roles.includes('Customer')) {
-        router.push('/');
       } else {
         router.push('/');
       }
     } else if (loginUser.rejected.match(resultAction)) {
-      const msg = typeof resultAction.payload === 'string' ? resultAction.payload : (error || 'Sign in failed');
+      const msg = typeof resultAction.payload === 'string' ? resultAction.payload : 'Sign in failed';
       notify(msg, 'error');
     }
   };
@@ -88,7 +92,7 @@ const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
         </Divider>
       </Box>
 
-      <form onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
         <Stack>
           <Box>
             <CustomFormLabel htmlFor="email">Email</CustomFormLabel>
@@ -96,9 +100,9 @@ const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
               id="email"
               variant="outlined"
               fullWidth
-              value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-              required
+              {...register('email')}
+              error={!!errors.email}
+              helperText={errors.email?.message}
             />
           </Box>
           <Box>
@@ -108,9 +112,9 @@ const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
               type={showPassword ? 'text' : 'password'}
               variant="outlined"
               fullWidth
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-              required
+              {...register('password')}
+              error={!!errors.password}
+              helperText={errors.password?.message}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -170,7 +174,7 @@ const AuthLogin = ({ title, subtitle, subtext }: AuthLoginProps) => {
             {loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </Box>
-      </form>
+      </Box>
       {subtitle}
     </>
   );

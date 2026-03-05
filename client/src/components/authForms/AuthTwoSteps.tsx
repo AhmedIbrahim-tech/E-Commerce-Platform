@@ -8,8 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { twoStepVerification } from '@/store/slices/authSlice';
 import { twoStepSchema } from '@/validation/auth.schema';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
@@ -20,7 +19,7 @@ import { useNotify } from '@/context/NotifyContext';
 const AuthTwoSteps = () => {
     const [submitting, setSubmitting] = useState(false);
     const router = useRouter();
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
     const { notify } = useNotify();
 
     const { register, handleSubmit, formState: { errors } } = useForm<{ code: string }>({

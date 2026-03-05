@@ -46,3 +46,14 @@ export interface ResetPasswordCredentials {
   newPassword: string;
   confirmPassword: string;
 }
+
+export interface ChangePasswordCredentials {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface TwoStepVerificationCredentials {
+  code: string;
+  email?: string;
+}

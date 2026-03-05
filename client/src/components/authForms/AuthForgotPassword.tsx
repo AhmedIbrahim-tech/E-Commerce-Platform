@@ -7,8 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { sendResetPasswordCode } from '@/store/slices/authSlice';
 import { forgotPasswordSchema } from '@/validation/auth.schema';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
@@ -16,11 +15,10 @@ import CustomFormLabel from '@/components/forms/theme-elements/CustomFormLabel';
 import { useNotify } from '@/context/NotifyContext';
 
 export default function AuthForgotPassword() {
-    const [successMsg, setSuccessMsg] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [localError, setLocalError] = useState<string | null>(null);
     const router = useRouter();
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
+    const { notify } = useNotify();
 
     const { register, handleSubmit, formState: { errors } } = useForm<{ email: string }>({
         resolver: yupResolver(forgotPasswordSchema),
@@ -40,24 +38,22 @@ export default function AuthForgotPassword() {
     };
 
     return (
-        <>
-            <Stack mt={4} spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
-                <CustomFormLabel htmlFor="reset-email">Email Address</CustomFormLabel>
-                <CustomTextField
-                    id="reset-email"
-                    variant="outlined"
-                    fullWidth
-                    {...register('email')}
-                    error={!!errors.email}
-                    helperText={errors.email?.message}
-                />
-                <Button color="primary" variant="contained" size="large" fullWidth type="submit" disabled={submitting}>
-                    Send Reset Code
-                </Button>
-                <Button color="primary" size="large" fullWidth component={Link} href="/login">
-                    Back to Login
-                </Button>
-            </Stack>
-        </>
+        <Stack mt={4} spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
+            <CustomFormLabel htmlFor="reset-email">Email Address</CustomFormLabel>
+            <CustomTextField
+                id="reset-email"
+                variant="outlined"
+                fullWidth
+                {...register('email')}
+                error={!!errors.email}
+                helperText={errors.email?.message}
+            />
+            <Button color="primary" variant="contained" size="large" fullWidth type="submit" disabled={submitting}>
+                Send Reset Code
+            </Button>
+            <Button color="primary" size="large" fullWidth component={Link} href="/login">
+                Back to Login
+            </Button>
+        </Stack>
     );
 }

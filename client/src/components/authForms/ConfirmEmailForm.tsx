@@ -1,8 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { confirmEmail, clearError } from '@/store/slices/authSlice';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -11,14 +10,14 @@ import CircularProgress from '@mui/material/CircularProgress';
 import { useNotify } from '@/context/NotifyContext';
 
 const ConfirmEmailForm = () => {
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
     const router = useRouter();
     const searchParams = useSearchParams();
     const userId = searchParams.get('userId');
     const code = searchParams.get('code');
 
     const { notify } = useNotify();
-    const { confirmEmailError, confirmEmailLoading } = useSelector((state: RootState) => state.auth);
+    const { confirmEmailLoading } = useAppSelector((state) => state.auth);
     const [initiated, setInitiated] = useState(false);
 
     useEffect(() => {
@@ -35,14 +34,13 @@ const ConfirmEmailForm = () => {
                 if (confirmEmail.fulfilled.match(resultAction)) {
                     notify('Email confirmed successfully! You can now log in.', 'success');
                     setTimeout(() => router.push('/login'), 3000);
+                } else if (confirmEmail.rejected.match(resultAction)) {
+                    const msg = typeof resultAction.payload === 'string' ? resultAction.payload : 'Email confirmation failed';
+                    notify(msg, 'error');
                 }
             });
         }
     }, [userId, code, dispatch, router, initiated, notify]);
-
-    useEffect(() => {
-        if (confirmEmailError) notify(confirmEmailError, 'error');
-    }, [confirmEmailError, notify]);
 
     return (
         <Box>

@@ -3,14 +3,13 @@
 import { useCustomizer } from '@/hooks/useCustomizer';
 import { Box, Avatar, Typography, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { IconPower } from '@tabler/icons-react';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { useRouter } from 'next/navigation';
-import { AppDispatch } from '@/store/store';
 import { logoutAsync } from '@/store/slices/authSlice';
 
 export const Profile = () => {
   const lgUp = useMediaQuery((theme: any) => theme.breakpoints.up('lg'));
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const router = useRouter();
   const { isSidebarHover, isCollapse } = useCustomizer();
   const hideMenu = lgUp ? isCollapse == 'mini-sidebar' && !isSidebarHover : '';

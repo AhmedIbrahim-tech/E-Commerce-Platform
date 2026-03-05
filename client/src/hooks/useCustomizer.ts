@@ -1,5 +1,4 @@
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
-import { RootState } from '@/store/store';
+import { useAppSelector, useAppDispatch } from '@/hooks/useRedux';
 import {
     setActiveDir,
     setActiveMode,
@@ -17,7 +16,7 @@ import {
 import { AppState } from '@/store/slices/appSlice';
 
 export const useCustomizer = () => {
-    const customizer = useAppSelector((state: RootState) => state.app) as AppState;
+    const customizer = useAppSelector((state) => state.app) as AppState;
     const dispatch = useAppDispatch();
 
     return {

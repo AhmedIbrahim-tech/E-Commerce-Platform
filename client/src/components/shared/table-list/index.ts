@@ -3,8 +3,9 @@ export type {
   TableListProps,
   TableListColumn,
   TableListStatCard,
-  TableListActions,
   TableListActionItem,
   TableListPagination,
+  TableListFilterPanel,
+  TableListSnackbar,
   BreadcrumbItem,
-} from './TableListTypes';
+} from '@/types/table/tableList';

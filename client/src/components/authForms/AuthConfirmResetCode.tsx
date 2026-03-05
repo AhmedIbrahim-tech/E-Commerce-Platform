@@ -7,8 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { confirmResetPasswordCode } from '@/store/slices/authSlice';
 import { confirmResetPasswordSchema } from '@/validation/auth.schema';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
@@ -18,14 +17,21 @@ import { useNotify } from '@/context/NotifyContext';
 export default function AuthConfirmResetCode() {
     const [email, setEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [ready, setReady] = useState(false);
     const router = useRouter();
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
     const { notify } = useNotify();
 
     useEffect(() => {
-        const stored = typeof window !== 'undefined' ? sessionStorage.getItem('resetPasswordEmail') : null;
-        setEmail(stored || '');
-    }, []);
+        const stored = sessionStorage.getItem('resetPasswordEmail');
+        if (stored) {
+            setEmail(stored);
+            setReady(true);
+        } else {
+            notify('No email found. Please start from the forgot password page.', 'error');
+            router.push('/forgot-password');
+        }
+    }, [notify, router]);
 
     const { register, handleSubmit, setValue, formState: { errors } } = useForm<{ code: string; email: string }>({
         resolver: yupResolver(confirmResetPasswordSchema),
@@ -42,20 +48,14 @@ export default function AuthConfirmResetCode() {
         const result = await dispatch(confirmResetPasswordCode({ code: data.code, email: emailToUse }));
         setSubmitting(false);
         if (confirmResetPasswordCode.fulfilled.match(result)) {
+            notify('Code verified successfully.', 'success');
             router.push('/forgot-password/reset');
         } else if (confirmResetPasswordCode.rejected.match(result)) {
             notify(typeof result.payload === 'string' ? result.payload : 'Invalid code', 'error');
         }
     };
 
-    if (!email) {
-        return (
-            <Stack mt={4} spacing={2}>
-                <Alert severity="info">No email found. Please start from the forgot password page.</Alert>
-                <Button component={Link} href="/forgot-password">Go to Forgot Password</Button>
-            </Stack>
-        );
-    }
+    if (!ready) return null;
 
     return (
         <Stack mt={4} spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>

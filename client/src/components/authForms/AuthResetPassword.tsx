@@ -4,13 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Alert from '@mui/material/Alert';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { useAppDispatch } from '@/hooks/useRedux';
 import { resetPassword } from '@/store/slices/authSlice';
 import { resetPasswordSchema } from '@/validation/auth.schema';
 import CustomTextField from '@/components/forms/theme-elements/CustomTextField';
@@ -23,14 +21,21 @@ export default function AuthResetPassword() {
     const [email, setEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [ready, setReady] = useState(false);
     const router = useRouter();
-    const dispatch = useDispatch<AppDispatch>();
+    const dispatch = useAppDispatch();
     const { notify } = useNotify();
 
     useEffect(() => {
-        const stored = typeof window !== 'undefined' ? sessionStorage.getItem('resetPasswordEmail') : null;
-        setEmail(stored || '');
-    }, []);
+        const stored = sessionStorage.getItem('resetPasswordEmail');
+        if (stored) {
+            setEmail(stored);
+            setReady(true);
+        } else {
+            notify('Session expired. Please start from the forgot password page.', 'error');
+            router.push('/forgot-password');
+        }
+    }, [notify, router]);
 
     const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
         resolver: yupResolver(resetPasswordSchema),
@@ -47,7 +52,7 @@ export default function AuthResetPassword() {
         setSubmitting(false);
         if (resetPassword.fulfilled.match(result)) {
             setSuccess(true);
-            if (typeof window !== 'undefined') sessionStorage.removeItem('resetPasswordEmail');
+            sessionStorage.removeItem('resetPasswordEmail');
             notify('Password reset successfully. Redirecting to login...', 'success');
             setTimeout(() => router.push('/login'), 2000);
         } else if (resetPassword.rejected.match(result)) {
@@ -55,14 +60,7 @@ export default function AuthResetPassword() {
         }
     };
 
-    if (!email) {
-        return (
-            <Stack mt={4} spacing={2}>
-                <Alert severity="info">Session expired. Please start from the forgot password page.</Alert>
-                <Button component={Link} href="/forgot-password">Go to Forgot Password</Button>
-            </Stack>
-        );
-    }
+    if (!ready) return null;
 
     if (success) {
         return (

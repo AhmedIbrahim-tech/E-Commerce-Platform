@@ -63,7 +63,7 @@ import {
   IconPencil,
   IconTrash,
 } from '@tabler/icons-react';
-import type { TableListColumn } from '@/components/shared/table-list/TableListTypes';
+import type { TableListColumn } from '@/types/table/tableList';
 
 const BCrumb = [
   { to: '/', title: 'Dashboard' },

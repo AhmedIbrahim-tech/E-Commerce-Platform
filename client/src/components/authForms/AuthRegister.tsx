@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { registerSchema } from '@/validation/auth.schema';
-import { useDispatch, useSelector } from 'react-redux';
-import { AppDispatch, RootState } from '@/store/store';
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { registerUser, clearError } from '@/store/slices/authSlice';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -25,9 +24,9 @@ interface registerType {
 }
 
 const AuthRegister = ({ title, subtitle, subtext }: registerType) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
   const router = useRouter();
-  const { registerError, registerLoading } = useSelector((state: RootState) => state.auth);
+  const { registerError, registerLoading } = useAppSelector((state) => state.auth);
   const { notify } = useNotify();
 
   const {

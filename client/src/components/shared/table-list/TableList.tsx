@@ -27,6 +27,8 @@ import {
   Snackbar,
   SnackbarContent,
   Tooltip,
+  Divider,
+  CircularProgress,
 } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import {
@@ -34,7 +36,6 @@ import {
   IconFilter,
   IconSettings,
   IconDownload,
-  IconChevronDown,
   IconDotsVertical,
   IconArrowUp,
   IconArrowDown,
@@ -48,10 +49,9 @@ import { flexRender } from '@tanstack/react-table';
 import type {
   TableListProps,
   TableListColumn,
-  TableListActions,
   TableListStatCard,
   BreadcrumbItem,
-} from './TableListTypes';
+} from '@/types/table/tableList';
 
 const statColorMap: Record<string, { bg: string; color: string }> = {
   primary: { bg: 'primary.light', color: 'primary.main' },
@@ -89,6 +89,7 @@ function TableListInner<T extends object>({
   actions,
   pagination,
   emptyMessage = 'No data',
+  loading = false,
   tableTitle,
   tanStackTable,
   renderExpandedRow,
@@ -103,7 +104,6 @@ function TableListInner<T extends object>({
   const visibleColumns = columns.filter((c) => visibleIds.includes(c.id));
 
   const [toggleAnchor, setToggleAnchor] = useState<null | HTMLElement>(null);
-  const [rowMenuAnchor, setRowMenuAnchor] = useState<{ el: HTMLElement; row: T; kind: 'dropdown' | 'more' } | null>(null);
   const [showSearchInput, setShowSearchInput] = useState(false);
 
   const handleSelectAll = (checked: boolean) => {
@@ -128,20 +128,18 @@ function TableListInner<T extends object>({
     return raw != null ? String(raw) : '—';
   };
 
-  const rowActions = rowMenuAnchor ? actions?.(rowMenuAnchor.row) : null;
-
   const showBreadcrumbCard = title !== '' || breadcrumbItems.length > 0;
+  const hasActions = Boolean(renderActions || actions);
+  const totalSimpleCols =
+    visibleColumns.length + (selectable ? 1 : 0) + (hasActions ? 1 : 0);
 
   return (
     <Box className="table-list-root">
+      {/* ── Breadcrumb card ─────────────────────────────────────────── */}
       {showBreadcrumbCard && (
         <Card
           className="table-list-breadcrumb-card"
-          sx={{
-            padding: 0,
-            border: `1px solid ${borderColor}`,
-            marginBottom: 3,
-          }}
+          sx={{ padding: 0, border: `1px solid ${borderColor}`, marginBottom: 3 }}
           elevation={0}
           variant="outlined"
         >
@@ -153,11 +151,7 @@ function TableListInner<T extends object>({
               </Typography>
             )}
             {breadcrumbItems.length > 0 && (
-              <Box
-                component="nav"
-                sx={{ display: 'flex', alignItems: 'center', mt: 1.25 }}
-                aria-label="breadcrumb"
-              >
+              <Box component="nav" sx={{ display: 'flex', alignItems: 'center', mt: 1.25 }} aria-label="breadcrumb">
                 {breadcrumbItems.map((item: BreadcrumbItem, idx: number) => (
                   <React.Fragment key={item.title}>
                     {idx > 0 && (
@@ -182,93 +176,77 @@ function TableListInner<T extends object>({
         </Card>
       )}
 
+      {/* ── Statistics – default variant ─────────────────────────────── */}
       {statistics.length > 0 && statisticsVariant === 'default' && (
-        <Typography variant="h6" className="table-list-stats-title" sx={{ mb: 2 }}>
-          {statisticsTitle}
-        </Typography>
-      )}
-      {statistics.length > 0 && statisticsVariant === 'default' && (
-        <Stack className="table-list-stats-wrap" direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
-          {statistics.map((stat, idx) => {
-            const colorKey = stat.color ?? 'primary';
-            const colors = statColorMap[colorKey] ?? statColorMap.primary;
-            return (
-              <Card
-                key={idx}
-                className="table-list-stat-card"
-                elevation={0}
-                variant="outlined"
-                sx={{
-                  minWidth: 140,
-                  border: `1px solid ${borderColor}`,
-                  borderRadius: 2,
-                }}
-              >
-                <CardContent sx={{ py: 2, px: 2.5 }}>
-                  <Stack direction="row" alignItems="center" spacing={1.5}>
-                    <Box
-                      sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 1.5,
-                        bgcolor: colors.bg,
-                        color: colors.color,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      {stat.icon ?? null}
-                    </Box>
-                    <Box>
-                      <Typography variant="body2" color="textSecondary">
-                        {stat.label}
-                      </Typography>
-                      <Typography variant="h6" fontWeight={600}>
-                        {stat.value}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </Stack>
+        <>
+          <Typography variant="h6" className="table-list-stats-title" sx={{ mb: 2 }}>
+            {statisticsTitle}
+          </Typography>
+          <Stack className="table-list-stats-wrap" direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
+            {statistics.map((stat: TableListStatCard, idx: number) => {
+              const colorKey = stat.color ?? 'primary';
+              const colors = statColorMap[colorKey] ?? statColorMap.primary;
+              return (
+                <Card
+                  key={idx}
+                  className="table-list-stat-card"
+                  elevation={0}
+                  variant="outlined"
+                  sx={{ minWidth: 140, border: `1px solid ${borderColor}`, borderRadius: 2 }}
+                >
+                  <CardContent sx={{ py: 2, px: 2.5 }}>
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1.5,
+                          bgcolor: colors.bg,
+                          color: colors.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        {stat.icon ?? null}
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="textSecondary">{stat.label}</Typography>
+                        <Typography variant="h6" fontWeight={600}>{stat.value}</Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </Stack>
+        </>
       )}
 
+      {/* ── Statistics – compact variant ─────────────────────────────── */}
       {statistics.length > 0 && statisticsVariant === 'compact' && (
         <>
           <Typography variant="h6" className="table-list-stats-title" sx={{ mb: 2 }}>
             {statisticsTitle}
           </Typography>
           <Box display="flex" gap={2} flexWrap="wrap" width="100%" sx={{ mb: 3 }}>
-            {statistics.map((stat, idx) => (
+            {statistics.map((stat: TableListStatCard, idx: number) => (
               <Card
                 key={idx}
                 elevation={0}
                 sx={{
                   backgroundColor: stat.bgcolor ?? 'grey.100',
                   p: 1.5,
-                  flex: {
-                    xs: '1 1 calc(50% - 8px)',
-                    sm: '1 1 calc(33.33% - 8px)',
-                    md: '1 1 0',
-                  },
+                  flex: { xs: '1 1 calc(50% - 8px)', sm: '1 1 calc(33.33% - 8px)', md: '1 1 0' },
                 }}
                 className="table-list-stat-card"
               >
                 <Stack direction="row" justifyContent="space-between">
                   <Box>
-                    <Typography fontSize={16} fontWeight={600}>
-                      {stat.value}
-                    </Typography>
-                    <Typography fontSize={11} color="text.secondary">
-                      {stat.label}
-                    </Typography>
+                    <Typography fontSize={16} fontWeight={600}>{stat.value}</Typography>
+                    <Typography fontSize={11} color="text.secondary">{stat.label}</Typography>
                   </Box>
-                  <Box width={20} height={20} fontSize={16}>
-                    {stat.icon ?? null}
-                  </Box>
+                  <Box width={20} height={20} fontSize={16}>{stat.icon ?? null}</Box>
                 </Stack>
               </Card>
             ))}
@@ -276,12 +254,12 @@ function TableListInner<T extends object>({
         </>
       )}
 
+      {/* ── Table card ──────────────────────────────────────────────── */}
       <Card className="table-list-table-card" elevation={0} variant="outlined" sx={{ border: `1px solid ${borderColor}` }}>
         <CardContent>
+          {/* ── Toolbar ─────────────────────────────────────────────── */}
           <Box display="flex" alignItems="center" justifyContent="space-between" width="100%" sx={{ mb: 2 }}>
-            {tableTitle && (
-              <Typography variant="h6">{tableTitle}</Typography>
-            )}
+            {tableTitle && <Typography variant="h6">{tableTitle}</Typography>}
             <Box display="flex" alignItems="center" className="table-list-toolbar">
               {onSearchChange && searchToggle && (
                 <>
@@ -296,13 +274,7 @@ function TableListInner<T extends object>({
                       placeholder={searchPlaceholder}
                       onBlur={() => { if (!searchValue) setShowSearchInput(false); }}
                       autoFocus
-                      sx={{
-                        borderBottom: '1px solid',
-                        borderColor: 'divider',
-                        px: 1,
-                        fontSize: 14,
-                        minWidth: 160,
-                      }}
+                      sx={{ borderBottom: '1px solid', borderColor: 'divider', px: 1, fontSize: 14, minWidth: 160 }}
                     />
                   )}
                 </>
@@ -333,6 +305,7 @@ function TableListInner<T extends object>({
                   <IconFilter size={20} />
                 </IconButton>
               )}
+              {/* Column visibility toggle – TanStack mode */}
               {isTanStackMode && tanStackTable && (
                 <>
                   <IconButton onClick={(e) => setToggleAnchor(e.currentTarget)} aria-label="Toggle columns" size="small">
@@ -370,6 +343,7 @@ function TableListInner<T extends object>({
                   </Menu>
                 </>
               )}
+              {/* Column visibility toggle – simple mode */}
               {!isTanStackMode && (onToggleColumnsClick || (columns.some((c) => c.hideable) && onVisibleColumnsChange)) && (
                 <>
                   <IconButton
@@ -426,192 +400,48 @@ function TableListInner<T extends object>({
 
           {filterPanel?.open && filterPanel.content}
 
+          {/* ── Table ───────────────────────────────────────────────── */}
           <TableContainer
             className="table-list-table-container"
-            sx={{ overflowX: 'auto', border: isTanStackMode ? '1px solid' : undefined, borderColor: isTanStackMode ? 'divider' : undefined, borderRadius: isTanStackMode ? 1 : undefined, mt: filterPanel?.open ? 2 : 0 }}
+            sx={{
+              overflowX: 'auto',
+              border: isTanStackMode ? '1px solid' : undefined,
+              borderColor: isTanStackMode ? 'divider' : undefined,
+              borderRadius: isTanStackMode ? 1 : undefined,
+              mt: filterPanel?.open ? 2 : 0,
+            }}
           >
             <Table className="table-list-table" size="small" sx={{ whiteSpace: 'nowrap' }} aria-label="table list">
               {isTanStackMode && tanStackTable ? (
-                <>
-                  <TableHead>
-                    {tanStackTable.getHeaderGroups().map((headerGroup) => (
-                      <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          const isSortable = header.column.getCanSort();
-                          return (
-                            <TableCell
-                              key={header.id}
-                              onClick={isSortable ? header.column.getToggleSortingHandler() : undefined}
-                              sx={{
-                                cursor: isSortable ? 'pointer' : 'default',
-                                fontWeight: 600,
-                                fontSize: '14px',
-                                backgroundColor: 'divider',
-                              }}
-                            >
-                              <Box display="flex" alignItems="center">
-                                <Typography variant="body2" fontWeight={600}>
-                                  {flexRender(header.column.columnDef.header, header.getContext())}
-                                </Typography>
-                                {isSortable && (
-                                  <Box ml={1} textAlign="center">
-                                    {header.column.getIsSorted() === 'asc' ? (
-                                      <IconArrowUp size={14} />
-                                    ) : header.column.getIsSorted() === 'desc' ? (
-                                      <IconArrowDown size={14} />
-                                    ) : (
-                                      <IconArrowsSort size={12} />
-                                    )}
-                                  </Box>
-                                )}
-                              </Box>
-                            </TableCell>
-                          );
-                        })}
-                      </TableRow>
-                    ))}
-                  </TableHead>
-                  <TableBody>
-                    {tanStackTable.getRowModel().rows.map((row) => (
-                      <React.Fragment key={row.id}>
-                        <TableRow>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id} sx={{ fontSize: '14px', fontWeight: '500' }}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                        {row.getIsExpanded() && renderExpandedRow && (
-                          <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                            <TableCell colSpan={row.getVisibleCells().length}>
-                              <Box p={2}>{renderExpandedRow(row.original as T)}</Box>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </TableBody>
-                </>
+                <TanStackTableContent
+                  tanStackTable={tanStackTable}
+                  renderExpandedRow={renderExpandedRow}
+                  loading={loading}
+                />
               ) : (
-                <>
-                  <TableHead>
-                    <TableRow>
-                      {selectable && (
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            indeterminate={someSelected && !allSelected}
-                            checked={allSelected}
-                            onChange={(_, checked) => handleSelectAll(checked)}
-                            size="small"
-                          />
-                        </TableCell>
-                      )}
-                      {visibleColumns.map((col) => (
-                        <TableCell key={col.id} align={col.align ?? 'left'}>
-                          <Typography variant="subtitle2" fontWeight={600}>
-                            {col.label}
-                          </Typography>
-                        </TableCell>
-                      ))}
-                      {(renderActions || actions) && (
-                        <TableCell align="right">
-                          <Typography variant="subtitle2" fontWeight={600}>
-                            ACTIONS
-                          </Typography>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {rows.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={visibleColumns.length + (selectable ? 1 : 0) + (renderActions || actions ? 1 : 0)}>
-                          <Typography className="table-list-empty" color="textSecondary" textAlign="center" py={4}>
-                            {emptyMessage}
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      rows.map((row) => {
-                        const rowId = getRowId(row);
-                        const selected = selectedIds.includes(rowId);
-                        return (
-                          <TableRow key={String(rowId)} hover selected={selected}>
-                            {selectable && (
-                              <TableCell padding="checkbox">
-                                <Checkbox
-                                  checked={selected}
-                                  onChange={(_, checked) => handleSelectRow(rowId, checked)}
-                                  size="small"
-                                />
-                              </TableCell>
-                            )}
-                            {visibleColumns.map((col) => (
-                              <TableCell key={col.id} align={col.align ?? 'left'}>
-                                {getCellValue(row, col)}
-                              </TableCell>
-                            ))}
-                            {(renderActions || actions) && (
-                              <TableCell className="table-list-actions-cell" align="right" sx={{ whiteSpace: 'nowrap' }}>
-                                {renderActions ? (
-                                  renderActions(row)
-                                ) : (
-                                  <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                                    {actions?.(row).dropdown?.length ? (
-                                      <IconButton
-                                        size="small"
-                                        onClick={(e) => setRowMenuAnchor({ el: e.currentTarget, row, kind: 'dropdown' })}
-                                        aria-label="Actions"
-                                      >
-                                        <IconChevronDown size={18} />
-                                      </IconButton>
-                                    ) : null}
-                                    {actions?.(row).more?.length ? (
-                                      <IconButton
-                                        size="small"
-                                        onClick={(e) => setRowMenuAnchor({ el: e.currentTarget, row, kind: 'more' })}
-                                        aria-label="More"
-                                      >
-                                        <IconDotsVertical size={18} />
-                                      </IconButton>
-                                    ) : null}
-                                  </Stack>
-                                )}
-                              </TableCell>
-                            )}
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </>
+                <SimpleTableContent
+                  columns={visibleColumns}
+                  rows={rows}
+                  getRowId={getRowId}
+                  selectable={selectable}
+                  selectedIds={selectedIds}
+                  allSelected={allSelected}
+                  someSelected={someSelected}
+                  handleSelectAll={handleSelectAll}
+                  handleSelectRow={handleSelectRow}
+                  getCellValue={getCellValue}
+                  renderActions={renderActions}
+                  actions={actions}
+                  hasActions={hasActions}
+                  emptyMessage={emptyMessage}
+                  loading={loading}
+                  totalCols={totalSimpleCols}
+                />
               )}
             </Table>
           </TableContainer>
 
-          {!isTanStackMode && rowMenuAnchor && rowActions && (
-            <Menu
-              anchorEl={rowMenuAnchor.el}
-              open={Boolean(rowMenuAnchor.el)}
-              onClose={() => setRowMenuAnchor(null)}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              {(rowMenuAnchor.kind === 'dropdown' ? rowActions.dropdown : rowActions.more)?.map((item, idx) => (
-                <MenuItem
-                  key={idx}
-                  onClick={() => {
-                    item.onClick(rowMenuAnchor.row);
-                    setRowMenuAnchor(null);
-                  }}
-                >
-                  {item.icon}
-                  <Typography sx={{ ml: item.icon ? 1 : 0 }}>{item.label}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          )}
-
+          {/* ── Pagination ──────────────────────────────────────────── */}
           {isTanStackMode && tanStackTable && (
             <TablePagination
               component="div"
@@ -633,9 +463,7 @@ function TableListInner<T extends object>({
               page={pagination.page}
               onPageChange={(_, newPage) => pagination.onPageChange(newPage)}
               rowsPerPage={pagination.rowsPerPage}
-              onRowsPerPageChange={(e) =>
-                pagination.onRowsPerPageChange(Number(e.target.value))
-              }
+              onRowsPerPageChange={(e) => pagination.onRowsPerPageChange(Number(e.target.value))}
               rowsPerPageOptions={pagination.rowsPerPageOptions ?? [5, 10, 25, 50]}
               labelRowsPerPage="Rows per page:"
             />
@@ -643,6 +471,7 @@ function TableListInner<T extends object>({
         </CardContent>
       </Card>
 
+      {/* ── Snackbar ────────────────────────────────────────────────── */}
       {snackbar && (
         <Snackbar
           open={snackbar.open}
@@ -655,9 +484,7 @@ function TableListInner<T extends object>({
             message={
               <Box display="flex" alignItems="center" gap={1}>
                 <CheckCircleOutlineIcon sx={{ color: 'white' }} />
-                <Typography variant="body2" sx={{ color: 'white' }}>
-                  {snackbar.message}
-                </Typography>
+                <Typography variant="body2" sx={{ color: 'white' }}>{snackbar.message}</Typography>
               </Box>
             }
           />
@@ -666,6 +493,248 @@ function TableListInner<T extends object>({
     </Box>
   );
 }
+
+// ── TanStack table content ────────────────────────────────────────────
+
+function TanStackTableContent<T extends object>({
+  tanStackTable,
+  renderExpandedRow,
+  loading,
+}: {
+  tanStackTable: NonNullable<TableListProps<T>['tanStackTable']>;
+  renderExpandedRow?: TableListProps<T>['renderExpandedRow'];
+  loading: boolean;
+}) {
+  return (
+    <>
+      <TableHead>
+        {tanStackTable.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              const isSortable = header.column.getCanSort();
+              return (
+                <TableCell
+                  key={header.id}
+                  onClick={isSortable ? header.column.getToggleSortingHandler() : undefined}
+                  sx={{ cursor: isSortable ? 'pointer' : 'default', fontWeight: 600, fontSize: '14px', backgroundColor: 'divider' }}
+                >
+                  <Box display="flex" alignItems="center">
+                    <Typography variant="body2" fontWeight={600}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </Typography>
+                    {isSortable && (
+                      <Box ml={1} textAlign="center">
+                        {header.column.getIsSorted() === 'asc' ? (
+                          <IconArrowUp size={14} />
+                        ) : header.column.getIsSorted() === 'desc' ? (
+                          <IconArrowDown size={14} />
+                        ) : (
+                          <IconArrowsSort size={12} />
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                </TableCell>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableHead>
+      <TableBody>
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={tanStackTable.getAllLeafColumns().length} align="center" sx={{ py: 6 }}>
+              <CircularProgress size={32} />
+            </TableCell>
+          </TableRow>
+        ) : (
+          tanStackTable.getRowModel().rows.map((row) => (
+            <React.Fragment key={row.id}>
+              <TableRow>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id} sx={{ fontSize: '14px', fontWeight: '500' }}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+              {row.getIsExpanded() && renderExpandedRow && (
+                <TableRow sx={{ backgroundColor: 'grey.100' }}>
+                  <TableCell colSpan={row.getVisibleCells().length}>
+                    <Box p={2}>{renderExpandedRow(row.original as T)}</Box>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+          ))
+        )}
+      </TableBody>
+    </>
+  );
+}
+
+// ── Simple table content ──────────────────────────────────────────────
+
+function SimpleTableContent<T extends object>({
+  columns,
+  rows,
+  getRowId,
+  selectable,
+  selectedIds,
+  allSelected,
+  someSelected,
+  handleSelectAll,
+  handleSelectRow,
+  getCellValue,
+  renderActions,
+  actions,
+  hasActions,
+  emptyMessage,
+  loading,
+  totalCols,
+}: {
+  columns: TableListProps<T>['columns'];
+  rows: T[];
+  getRowId: (row: T) => string | number;
+  selectable: boolean;
+  selectedIds: (string | number)[];
+  allSelected: boolean;
+  someSelected: boolean;
+  handleSelectAll: (checked: boolean) => void;
+  handleSelectRow: (id: string | number, checked: boolean) => void;
+  getCellValue: (row: T, col: TableListProps<T>['columns'][number]) => React.ReactNode;
+  renderActions?: TableListProps<T>['renderActions'];
+  actions?: (row: T) => import('@/types/table/tableList').TableListActionItem<T>[];
+  hasActions: boolean;
+  emptyMessage: string;
+  loading: boolean;
+  totalCols: number;
+}) {
+  return (
+    <>
+      <TableHead>
+        <TableRow>
+          {selectable && (
+            <TableCell padding="checkbox">
+              <Checkbox
+                indeterminate={someSelected && !allSelected}
+                checked={allSelected}
+                onChange={(_, checked) => handleSelectAll(checked)}
+                size="small"
+              />
+            </TableCell>
+          )}
+          {columns.map((col) => (
+            <TableCell key={col.id} align={col.align ?? 'left'}>
+              <Typography variant="subtitle2" fontWeight={600}>{col.label}</Typography>
+            </TableCell>
+          ))}
+          {hasActions && (
+            <TableCell align="right">
+              <Typography variant="subtitle2" fontWeight={600}>ACTIONS</Typography>
+            </TableCell>
+          )}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={totalCols} align="center" sx={{ py: 6 }}>
+              <CircularProgress size={32} />
+            </TableCell>
+          </TableRow>
+        ) : rows.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={totalCols}>
+              <Typography className="table-list-empty" color="textSecondary" textAlign="center" py={4}>
+                {emptyMessage}
+              </Typography>
+            </TableCell>
+          </TableRow>
+        ) : (
+          rows.map((row) => {
+            const rowId = getRowId(row);
+            const selected = selectedIds.includes(rowId);
+            return (
+              <TableRow key={String(rowId)} hover selected={selected}>
+                {selectable && (
+                  <TableCell padding="checkbox">
+                    <Checkbox checked={selected} onChange={(_, checked) => handleSelectRow(rowId, checked)} size="small" />
+                  </TableCell>
+                )}
+                {columns.map((col) => (
+                  <TableCell key={col.id} align={col.align ?? 'left'}>
+                    {getCellValue(row, col)}
+                  </TableCell>
+                ))}
+                {hasActions && (
+                  <TableCell className="table-list-actions-cell" align="right" sx={{ whiteSpace: 'nowrap' }}>
+                    {renderActions ? (
+                      renderActions(row)
+                    ) : actions ? (
+                      <RowActionsMenu row={row} actions={actions} />
+                    ) : null}
+                  </TableCell>
+                )}
+              </TableRow>
+            );
+          })
+        )}
+      </TableBody>
+    </>
+  );
+}
+
+// ── Row actions dropdown (rendered per-row so Menu anchors correctly) ─
+
+function RowActionsMenu<T extends object>({
+  row,
+  actions,
+}: {
+  row: T;
+  actions: (row: T) => import('@/types/table/tableList').TableListActionItem<T>[];
+}) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const items = actions(row);
+
+  if (items.length === 0) return null;
+
+  return (
+    <>
+      <IconButton
+        size="small"
+        onClick={(e) => setAnchorEl(e.currentTarget)}
+        aria-label="Row actions"
+      >
+        <IconDotsVertical size={18} />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        {items.map((item, idx) => (
+          <React.Fragment key={idx}>
+            {item.divider && idx > 0 && <Divider />}
+            <MenuItem
+              onClick={() => {
+                item.onClick(row);
+                setAnchorEl(null);
+              }}
+              sx={item.color ? { color: item.color } : undefined}
+            >
+              {item.icon && <Box component="span" sx={{ mr: 1, display: 'inline-flex', alignItems: 'center' }}>{item.icon}</Box>}
+              {item.label}
+            </MenuItem>
+          </React.Fragment>
+        ))}
+      </Menu>
+    </>
+  );
+}
+
+// ── Public export ─────────────────────────────────────────────────────
 
 export function TableList<T extends object>(props: TableListProps<T>) {
   return <TableListInner {...props} />;

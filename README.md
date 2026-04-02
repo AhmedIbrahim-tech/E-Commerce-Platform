@@ -52,8 +52,11 @@ This architecture ensures **testability**, **maintainability**, and **independen
 ## 🛠️ Technology Stack
 
 ### **Framework & Runtime**
-- **.NET 9** - Latest .NET runtime with performance improvements
+- **.NET 10** - Target framework for the API projects in this solution
 - **ASP.NET Core Web API** - Modern RESTful API framework
+
+### **Frontend (`client/`)**
+- Set **`NEXT_PUBLIC_API_URL`** to the API origin (see `client/.env.example`). Defaults to `https://localhost:7253` when unset.
 
 ### **Architecture Patterns**
 - **Clean Architecture** - Layered architecture with dependency inversion

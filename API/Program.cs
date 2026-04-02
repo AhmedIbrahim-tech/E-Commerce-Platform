@@ -12,11 +12,11 @@ builder.Services.AddApplicationCors(builder.Configuration);
 
 var app = builder.Build();
 
-// Apply database migrations automatically
-await app.ApplyMigrationsAsync();
-
-// Seed application data
-await app.SeedApplicationDataAsync();
+if (app.Environment.IsDevelopment())
+{
+    await app.ApplyMigrationsAsync();
+    await app.SeedApplicationDataAsync();
+}
 
 app.UseStaticFiles();
 

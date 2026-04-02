@@ -8,21 +8,20 @@ public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
 {
     public bool Authorize(DashboardContext context)
     {
-        // In production, you should implement proper authentication/authorization
-        // For now, allow access in development, restrict in production
         var httpContext = context.GetHttpContext();
-        
-        // Allow access in development
-        if (httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+        var env = httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+
+        if (env.IsDevelopment())
         {
             return true;
         }
 
-        // In production, you can check for authentication/authorization here
-        // Example: return httpContext.User.Identity?.IsAuthenticated == true && 
-        //          httpContext.User.IsInRole(Roles.Admin);
-        
-        // For now, allow access (you should secure this in production)
-        return true;
+        var user = httpContext.User;
+        if (user.Identity is not { IsAuthenticated: true })
+        {
+            return false;
+        }
+
+        return user.IsInRole(Roles.SuperAdmin) || user.IsInRole(Roles.Admin);
     }
 }

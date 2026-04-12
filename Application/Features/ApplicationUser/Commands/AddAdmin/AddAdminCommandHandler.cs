@@ -21,7 +21,7 @@ internal class AddAdminCommandHandler(
 {
     public async Task<ApiResponse<string>> Handle(AddAdminCommand request, CancellationToken cancellationToken)
     {
-        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
         var appUser = new AppUser(request.UserName, fullName)
         {
             Email = request.Email,

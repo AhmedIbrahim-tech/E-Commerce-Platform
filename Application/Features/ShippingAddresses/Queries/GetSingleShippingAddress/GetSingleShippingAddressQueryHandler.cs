@@ -7,15 +7,13 @@ public class GetSingleShippingAddressQueryHandler(IUnitOfWork unitOfWork) : ApiR
     {
         var shippingAddress = await unitOfWork.ShippingAddresses.GetTableNoTracking()
             .Where(c => c.Id.Equals(request.Id))
-            .Include(c => c.Customer)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (shippingAddress is null) return new ApiResponse<GetSingleShippingAddressResponse>(ShippingAddressErrors.ShippingAddressNotFound());
 
         var shippingAddressResponse = new GetSingleShippingAddressResponse(
             shippingAddress.Id,
-            shippingAddress.FirstName,
-            shippingAddress.LastName,
+            shippingAddress.FullName,
             shippingAddress.Street,
             shippingAddress.City,
             shippingAddress.State
@@ -24,4 +22,3 @@ public class GetSingleShippingAddressQueryHandler(IUnitOfWork unitOfWork) : ApiR
         return Success(shippingAddressResponse);
     }
 }
-

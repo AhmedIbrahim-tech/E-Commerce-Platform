@@ -1,3 +1,4 @@
+using Application.Common.Bases;
 using Application.Features.Admins.Commands.DeleteAdmin;
 using Application.Features.Admins.Commands.ToggleAdminStatus;
 using Application.Features.Admins.Commands.EditAdmin;
@@ -5,11 +6,12 @@ using Application.Features.Admins.Queries.GetAdminById;
 using Application.Features.Admins.Queries.GetAdminPaginatedList;
 using Application.Features.ApplicationUser.Commands.AddAdmin;
 using Infrastructure.Data.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers.Users;
 
-// Paginated, GetById, Create use [FromBody]. Edit uses [FromForm] for profile image upload. Delete uses route id (allowed). ToggleStatus refactored to [FromBody].
-[Authorize(Roles = Roles.Admin)]
+/// <summary>Admin profile CRUD. List responses use the standard <see cref="ApiResponse{T}"/> envelope.</summary>
+[Authorize(Roles = Roles.Admin + "," + Roles.SuperAdmin)]
 public class AdminController : AppControllerBase
 {
     [Authorize(Policy = Policies.Admin.ViewList)]
@@ -17,7 +19,7 @@ public class AdminController : AppControllerBase
     public async Task<IActionResult> GetAdminPaginatedList([FromBody] GetAdminPaginatedListQuery query)
     {
         var response = await Mediator.Send(query);
-        return Ok(response);
+        return NewResult(ApiResponseHandler.Success(response));
     }
 
     [Authorize(Policy = Policies.Admin.ViewProfile)]
@@ -27,16 +29,20 @@ public class AdminController : AppControllerBase
         return NewResult(await Mediator.Send(query));
     }
 
+    /// <summary>Create admin with optional avatar. Use <c>multipart/form-data</c> (profile image is a file field).</summary>
     [Authorize(Policy = Policies.Admin.Create)]
     [HttpPost(Router.AdminRouting.Create)]
-    public async Task<IActionResult> CreateAdmin([FromBody] AddAdminCommand command)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> CreateAdmin([FromForm] AddAdminCommand command)
     {
         var response = await Mediator.Send(command);
         return NewResult(response);
     }
 
+    /// <summary>Update admin; optional new avatar via multipart.</summary>
     [Authorize(Policy = Policies.Admin.EditProfile)]
     [HttpPut(Router.AdminRouting.Edit)]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> EditAdmin([FromForm] EditAdminCommand command)
     {
         var response = await Mediator.Send(command);
@@ -53,8 +59,8 @@ public class AdminController : AppControllerBase
 
     [Authorize(Policy = Policies.Admin.EditProfile)]
     [HttpPost(Router.AdminRouting.ToggleStatus)]
-    public async Task<IActionResult> ToggleAdminStatus([FromBody] ToggleAdminStatusCommand command)
+    public async Task<IActionResult> ToggleAdminStatus([FromRoute] Guid id)
     {
-        return NewResult(await Mediator.Send(command));
+        return NewResult(await Mediator.Send(new ToggleAdminStatusCommand(id)));
     }
 }

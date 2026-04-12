@@ -12,8 +12,7 @@ public class AddShippingAddressCommandHandler(
             var currentUserId = currentUserService.GetUserId();
             var shippingAddress = new ShippingAddress
             {
-                FirstName = request.FirstName,
-                LastName = request.LastName,
+                FullName = request.FullName,
                 Street = request.Street,
                 City = request.City,
                 State = request.State,
@@ -30,4 +29,3 @@ public class AddShippingAddressCommandHandler(
         }
     }
 }
-

@@ -14,13 +14,11 @@ public class EditShippingAddressCommandHandler : ApiResponseHandler,
     {
         var shippingAddress = await _unitOfWork.ShippingAddresses.GetTableAsTracking()
             .Where(c => c.Id.Equals(request.Id))
-            .Include(c => c.Customer)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (shippingAddress == null) return new ApiResponse<string>(ShippingAddressErrors.ShippingAddressNotFound());
 
-        shippingAddress.FirstName = request.FirstName;
-        shippingAddress.LastName = request.LastName;
+        shippingAddress.FullName = request.FullName;
         shippingAddress.Street = request.Street;
         shippingAddress.City = request.City;
         shippingAddress.State = request.State;
@@ -37,4 +35,3 @@ public class EditShippingAddressCommandHandler : ApiResponseHandler,
         }
     }
 }
-

@@ -15,8 +15,7 @@ public class GetShippingAddressListQueryHandler(
         var shippingAddressListResponse = shippingAddressList
             .Select(address => new GetShippingAddressListResponse(
                 address.Id,
-                address.FirstName,
-                address.LastName,
+                address.FullName,
                 address.Street,
                 address.City,
                 address.State
@@ -26,4 +25,3 @@ public class GetShippingAddressListQueryHandler(
         return Success(shippingAddressListResponse);
     }
 }
-

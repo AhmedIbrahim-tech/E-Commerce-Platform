@@ -2,8 +2,7 @@ namespace Application.Features.ApplicationUser.Commands.AddAdmin;
 
 public record AddAdminCommand : IRequest<ApiResponse<string>>
 {
-    public string? FirstName { get; init; }
-    public string? LastName { get; init; }
+    public string? FullName { get; init; }
     public string? UserName { get; init; }
     public string? Email { get; init; }
     public Gender? Gender { get; init; }

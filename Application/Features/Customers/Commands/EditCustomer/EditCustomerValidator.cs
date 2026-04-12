@@ -9,20 +9,14 @@ public class EditCustomerValidator : AbstractValidator<EditCustomerCommand>
 
     public void ApplyValidationRules()
     {
-        RuleFor(c => c.FirstName)
-            .NotEmpty().WithMessage("Field cannot be empty")
-            .NotNull().WithMessage("Field is required")
-            .MaximumLength(100).WithMessage("Maximum length is 100 characters");
-
-        RuleFor(c => c.LastName)
-            .NotEmpty().WithMessage("Field cannot be empty")
-            .NotNull().WithMessage("Field is required")
-            .MaximumLength(50).WithMessage("Maximum length is 100 characters");
+        RuleFor(c => c.FullName)
+            .NotEmpty().WithMessage("Full name is required")
+            .MaximumLength(150).WithMessage("Maximum length is 150 characters");
 
         RuleFor(c => c.UserName)
             .NotEmpty().WithMessage("Field cannot be empty")
             .NotNull().WithMessage("Field is required")
-            .MaximumLength(50).WithMessage("Maximum length is 100 characters");
+            .MaximumLength(50).WithMessage("Maximum length is 50 characters");
 
         RuleFor(c => c.Email)
             .NotEmpty().WithMessage("Field cannot be empty")
@@ -30,4 +24,3 @@ public class EditCustomerValidator : AbstractValidator<EditCustomerCommand>
             .EmailAddress().WithMessage("Invalid format");
     }
 }
-

@@ -19,7 +19,7 @@ internal class AddCustomerCommandHandler(
 {
     public async Task<ApiResponse<string>> Handle(AddCustomerCommand request, CancellationToken cancellationToken)
     {
-        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
         var appUser = new AppUser(request.UserName, fullName)
         {
             Email = request.Email,
@@ -52,6 +52,28 @@ internal class AddCustomerCommandHandler(
             {
                 await unitOfWork.RollbackTransactionAsync(cancellationToken);
                 return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
+            }
+
+            if (request.ProfileImage != null)
+            {
+                var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
+                    new[] { request.ProfileImage },
+                    FileLocations.Users,
+                    appUser.Id,
+                    childFolder: null,
+                    overwrite: true,
+                    cancellationToken: cancellationToken);
+
+                if (profileImageUrls.Count > 0)
+                {
+                    appUser.ProfileImage = profileImageUrls[0];
+                    var picUpdate = await userManager.UpdateAsync(appUser);
+                    if (!picUpdate.Succeeded)
+                    {
+                        await unitOfWork.RollbackTransactionAsync(cancellationToken);
+                        return new ApiResponse<string>(CustomerErrors.InvalidCustomerData());
+                    }
+                }
             }
 
             var addToRoleResult = await userManager.AddToRoleAsync(appUser, Roles.Customer);

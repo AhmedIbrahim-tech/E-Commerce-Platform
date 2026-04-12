@@ -1,4 +1,5 @@
 using Domain.Entities.Users;
+using Domain.Enums.Sorting;
 
 namespace Application.Wrappers;
 
@@ -19,10 +20,8 @@ public static class CustomerQueryableExtensions
         // Sort
         query = sortBy switch
         {
-            CustomerSortingEnum.FirstNameAsc => query.OrderBy(e => e.FullName ?? string.Empty),
-            CustomerSortingEnum.FirstNameDesc => query.OrderByDescending(e => e.FullName ?? string.Empty),
-            CustomerSortingEnum.LastNameAsc => query.OrderBy(e => e.FullName ?? string.Empty),
-            CustomerSortingEnum.LastNameDesc => query.OrderByDescending(e => e.FullName ?? string.Empty),
+            CustomerSortingEnum.FullNameAsc => query.OrderBy(e => e.FullName ?? string.Empty),
+            CustomerSortingEnum.FullNameDesc => query.OrderByDescending(e => e.FullName ?? string.Empty),
             _ => query.OrderBy(e => e.FullName ?? string.Empty)
         };
         return query;

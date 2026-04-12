@@ -15,20 +15,14 @@ public class AddShippingAddressValidator : AbstractValidator<AddShippingAddressC
 
     public void ApplyValidationRules()
     {
-        RuleFor(c => c.FirstName)
-            .NotEmpty().WithMessage("Field cannot be empty")
-            .NotNull().WithMessage("Field is required")
-            .MaximumLength(100).WithMessage("Maximum length is 100 characters");
-
-        RuleFor(c => c.LastName)
-            .NotEmpty().WithMessage("Field cannot be empty")
-            .NotNull().WithMessage("Field is required")
-            .MaximumLength(100).WithMessage("Maximum length is 100 characters");
+        RuleFor(c => c.FullName)
+            .NotEmpty().WithMessage("Full name is required")
+            .MaximumLength(150).WithMessage("Maximum length is 150 characters");
 
         RuleFor(c => c.Street)
             .NotEmpty().WithMessage("Field cannot be empty")
             .NotNull().WithMessage("Field is required")
-            .MaximumLength(100).WithMessage("Maximum length is 100 characters");
+            .MaximumLength(150).WithMessage("Maximum length is 150 characters");
 
         RuleFor(c => c.City)
             .NotEmpty().WithMessage("Field cannot be empty")
@@ -49,4 +43,3 @@ public class AddShippingAddressValidator : AbstractValidator<AddShippingAddressC
             .WithMessage("Shipping address already exists");
     }
 }
-

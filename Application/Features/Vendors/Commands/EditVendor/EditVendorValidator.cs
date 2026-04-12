@@ -9,13 +9,9 @@ public class EditVendorValidator : AbstractValidator<EditVendorCommand>
         RuleFor(v => v.Id)
             .NotEmpty().WithMessage("Vendor ID is required");
 
-        RuleFor(v => v.FirstName)
-            .NotEmpty().When(v => v.LastName != null)
-            .MaximumLength(100).WithMessage("First name cannot exceed 100 characters");
-
-        RuleFor(v => v.LastName)
-            .NotEmpty().When(v => v.FirstName != null)
-            .MaximumLength(100).WithMessage("Last name cannot exceed 100 characters");
+        RuleFor(v => v.FullName)
+            .NotEmpty().WithMessage("Full name is required")
+            .MaximumLength(150).WithMessage("Maximum length is 150 characters");
 
         RuleFor(v => v.UserName)
             .NotEmpty().WithMessage("Username is required")

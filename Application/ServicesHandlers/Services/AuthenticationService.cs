@@ -3,10 +3,10 @@ namespace Application.ServicesHandlers.Services;
 public interface IAuthenticationService
 {
     Task<JwtAuthResponse> GetJWTTokenAsync(AppUser user, bool rememberMe = false);
-    Task<JwtAuthResponse> GetRefreshTokenAsync(AppUser user, JwtSecurityToken jwtToken, DateTimeOffset? expiryDate, string refreshToken);
+    Task<JwtAuthResponse> GetRefreshTokenAsync(AppUser user, string oldJwtId, string refreshToken);
     JwtSecurityToken ReadJwtToken(string accessToken);
     Task<(bool IsValid, string Message)> ValidateToken(string accessToken);
-    Task<(string, DateTimeOffset?)> ValidateDetails(JwtSecurityToken jwtToken, string accessToken, string refreshToken);
+    Task<RefreshSessionValidationResult> ValidateRefreshSessionAsync(string refreshToken, string? accessToken);
     Task<string> ConfirmEmailAsync(Guid? userId, string? code);
     Task<string> SendResetPasswordCodeAsync(string email);
     Task<string> ConfirmResetPasswordAsync(string code, string email);
@@ -53,7 +53,7 @@ public class AuthenticationService(UserManager<AppUser> userManager, IOptions<Jw
         };
     }
 
-    public async Task<JwtAuthResponse> GetRefreshTokenAsync(AppUser user, JwtSecurityToken jwtToken, DateTimeOffset? expiryDate, string refreshToken)
+    public async Task<JwtAuthResponse> GetRefreshTokenAsync(AppUser user, string oldJwtId, string refreshToken)
     {
         if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
         {
@@ -67,7 +67,6 @@ public class AuthenticationService(UserManager<AppUser> userManager, IOptions<Jw
             throw new UnauthorizedAccessException("Email not confirmed");
         }
 
-        var oldJwtId = jwtToken.Id;
         var oldRefreshToken = await refreshTokenRepository.GetTableAsTracking()
             .FirstOrDefaultAsync(x => x.Token == refreshToken && x.JwtId == oldJwtId && x.AppUserId == user.Id);
 
@@ -135,46 +134,110 @@ public class AuthenticationService(UserManager<AppUser> userManager, IOptions<Jw
         }
     }
 
-    public async Task<(string, DateTimeOffset?)> ValidateDetails(JwtSecurityToken jwtToken, string accessToken, string refreshToken)
+    public async Task<RefreshSessionValidationResult> ValidateRefreshSessionAsync(string refreshToken, string? accessToken)
     {
-        if (jwtToken == null || !jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256Signature))
-            return ("AlgorithmIsWrong", null);
-        if (jwtToken.ValidTo > DateTimeOffset.UtcNow.ToLocalTime())
-            return ("TokenIsNotExpired", null);
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return new RefreshSessionValidationResult(false, "RefreshTokenMissing", Guid.Empty, default, string.Empty);
 
-        var userId = jwtToken.Claims.FirstOrDefault(x => x.Type == nameof(UserClaimModel.Id))!.Value;
-        var userRefreshToken = await refreshTokenRepository.GetTableAsTracking()
-            .FirstOrDefaultAsync(x => x.Token == refreshToken && x.JwtId == jwtToken.Id && x.AppUserId == Guid.Parse(userId));
+        var row = await refreshTokenRepository.GetTableAsTracking()
+            .FirstOrDefaultAsync(x => x.Token == refreshToken);
 
-        if (userRefreshToken == null)
+        if (row == null)
         {
-            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenNotFound, $"Refresh token not found for user with JwtId {jwtToken.Id}", Guid.Parse(userId), additionalData: $"{{\"JwtId\":\"{jwtToken.Id}\"}}");
-            return ("RefreshTokenIsNotFound", null);
+            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenNotFound, "Refresh token string not found in store", Guid.Empty);
+            return new RefreshSessionValidationResult(false, "RefreshTokenIsNotFound", Guid.Empty, default, string.Empty);
         }
 
-        if (userRefreshToken.IsUsed)
+        var userId = row.AppUserId;
+
+        if (row.IsUsed)
         {
-            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenReused, "Reused refresh token detected. Possible replay attack.", Guid.Parse(userId), additionalData: $"{{\"JwtId\":\"{jwtToken.Id}\"}}");
-            await RevokeAllUserTokensAsync(Guid.Parse(userId), "Reused refresh token detected");
-            return ("RefreshTokenReused", null);
+            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenReused, "Reused refresh token detected. Possible replay attack.", userId, additionalData: $"{{\"JwtId\":\"{row.JwtId}\"}}");
+            await RevokeAllUserTokensAsync(userId, "Reused refresh token detected");
+            return new RefreshSessionValidationResult(false, "RefreshTokenReused", userId, default, row.JwtId);
         }
 
-        if (userRefreshToken.IsRevoked)
+        if (row.IsRevoked)
         {
-            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RevokedRefreshTokenUsed, $"Revoked refresh token used for user with JwtId {jwtToken.Id}", Guid.Parse(userId), additionalData: $"{{\"JwtId\":\"{jwtToken.Id}\"}}");
-            return ("RefreshTokenRevoked", null);
+            await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RevokedRefreshTokenUsed, $"Revoked refresh token used for user with JwtId {row.JwtId}", userId, additionalData: $"{{\"JwtId\":\"{row.JwtId}\"}}");
+            return new RefreshSessionValidationResult(false, "RefreshTokenRevoked", userId, default, row.JwtId);
         }
 
-        if (userRefreshToken.ExpiresAt < DateTimeOffset.UtcNow)
+        if (row.ExpiresAt < DateTimeOffset.UtcNow)
         {
-            userRefreshToken.Revoke("Token expired");
-            await refreshTokenRepository.UpdateAsync(userRefreshToken, CancellationToken.None);
+            row.Revoke("Token expired");
+            await refreshTokenRepository.UpdateAsync(row, CancellationToken.None);
             await refreshTokenRepository.SaveChangesAsync(CancellationToken.None);
-            await auditService.LogEventAsync(AuditEventType.Authentication, AuditEventName.RefreshTokenExpired, "Expired refresh token revoked", Guid.Parse(userId), additionalData: $"{{\"JwtId\":\"{jwtToken.Id}\"}}");
-            return ("RefreshTokenIsExpired", null);
+            await auditService.LogEventAsync(AuditEventType.Authentication, AuditEventName.RefreshTokenExpired, "Expired refresh token revoked", userId, additionalData: $"{{\"JwtId\":\"{row.JwtId}\"}}");
+            return new RefreshSessionValidationResult(false, "RefreshTokenIsExpired", userId, default, row.JwtId);
         }
 
-        return (userId, userRefreshToken.ExpiresAt);
+        if (!string.IsNullOrWhiteSpace(accessToken))
+        {
+            JwtSecurityToken jwt;
+            try
+            {
+                jwt = ReadJwtToken(accessToken);
+            }
+            catch
+            {
+                return new RefreshSessionValidationResult(false, "InvalidAccessToken", userId, row.ExpiresAt, row.JwtId);
+            }
+
+            if (!string.Equals(jwt.Header.Alg, SecurityAlgorithms.HmacSha256, StringComparison.Ordinal))
+                return new RefreshSessionValidationResult(false, "AlgorithmIsWrong", userId, row.ExpiresAt, row.JwtId);
+
+            if (!string.Equals(jwt.Id, row.JwtId, StringComparison.Ordinal))
+            {
+                await auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenNotFound, "Access token jti does not match refresh session", userId, additionalData: $"{{\"ExpectedJwtId\":\"{row.JwtId}\",\"ActualJwtId\":\"{jwt.Id}\"}}");
+                return new RefreshSessionValidationResult(false, "TokenPairMismatch", userId, row.ExpiresAt, row.JwtId);
+            }
+
+            var claimUserId = jwt.Claims.FirstOrDefault(c => c.Type == nameof(UserClaimModel.Id))?.Value;
+            if (string.IsNullOrEmpty(claimUserId) || !Guid.TryParse(claimUserId, out var claimGuid) || claimGuid != row.AppUserId)
+                return new RefreshSessionValidationResult(false, "UserMismatch", userId, row.ExpiresAt, row.JwtId);
+
+            if (IsAccessTokenStillValid(jwt))
+                return new RefreshSessionValidationResult(false, "TokenIsNotExpired", userId, row.ExpiresAt, row.JwtId);
+        }
+
+        return new RefreshSessionValidationResult(true, null, row.AppUserId, row.ExpiresAt, row.JwtId);
+    }
+
+    private static bool TryGetJwtExpiryUtc(JwtSecurityToken jwt, out DateTime expUtc)
+    {
+        expUtc = default;
+        if (!jwt.Payload.TryGetValue(JwtRegisteredClaimNames.Exp, out var expObj) || expObj is null)
+            return false;
+
+        long seconds = expObj switch
+        {
+            long l => l,
+            int i => i,
+            double d => (long)d,
+            string s when long.TryParse(s, out var ls) => ls,
+            _ => 0L
+        };
+
+        if (seconds <= 0)
+            return false;
+
+        expUtc = DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+        return true;
+    }
+
+    private static bool IsAccessTokenStillValid(JwtSecurityToken jwt)
+    {
+        if (TryGetJwtExpiryUtc(jwt, out var expUtc))
+            return DateTime.UtcNow < expUtc;
+
+        if (jwt.ValidTo == default || jwt.ValidTo == DateTime.MinValue)
+            return false;
+
+        var vt = jwt.ValidTo.Kind == DateTimeKind.Utc
+            ? jwt.ValidTo
+            : jwt.ValidTo.ToUniversalTime();
+        return vt > DateTime.UtcNow;
     }
 
     public async Task<string> ConfirmEmailAsync(Guid? userId, string? code)
@@ -343,12 +406,19 @@ public class AuthenticationService(UserManager<AppUser> userManager, IOptions<Jw
         var jwtId = Guid.NewGuid().ToString();
         claims.Add(new Claim(JwtRegisteredClaimNames.Jti, jwtId));
 
+        var notBefore = DateTime.UtcNow;
+        var expires = notBefore.AddDays(_jwtSettings.AccessTokenExpireDate);
+
         var jwtToken = new JwtSecurityToken(
-            _jwtSettings.Issuer,
-            _jwtSettings.Audience,
-            claims,
-            DateTimeOffset.UtcNow.ToLocalTime().AddDays(_jwtSettings.AccessTokenExpireDate).DateTime,
-            signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSettings.Secret!)), SecurityAlgorithms.HmacSha256Signature));
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            notBefore: notBefore,
+            expires: expires,
+            signingCredentials: new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_jwtSettings.Secret!)),
+                SecurityAlgorithms.HmacSha256Signature));
+
         var accessToken = new JwtSecurityTokenHandler().WriteToken(jwtToken);
         return (jwtToken, accessToken);
     }

@@ -17,18 +17,15 @@ public class RefreshTokenCommandHandler(
 {
     public async Task<ApiResponse<JwtAuthResponse>> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var jwtToken = authenticationService.ReadJwtToken(request.AccessToken);
-        var validationResult = await authenticationService.ValidateDetails(jwtToken, request.AccessToken, request.RefreshToken);
+        var validation = await authenticationService.ValidateRefreshSessionAsync(request.RefreshToken, request.AccessToken);
 
-        if (validationResult.Item2 is null)
+        if (!validation.Success)
             return new ApiResponse<JwtAuthResponse>(UserErrors.InvalidRefreshToken());
 
-        var (userId, expiryDate) = validationResult;
-
-        var user = await userManager.FindByIdAsync(userId);
+        var user = await userManager.FindByIdAsync(validation.UserId.ToString());
         if (user == null)
         {
-            _ = auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenBlocked, "Refresh token attempt for non-existent user", Guid.Parse(userId), cancellationToken: cancellationToken);
+            _ = auditService.LogEventAsync(AuditEventType.Security, AuditEventName.RefreshTokenBlocked, "Refresh token attempt for non-existent user", validation.UserId, cancellationToken: cancellationToken);
             return new ApiResponse<JwtAuthResponse>(UserErrors.UserNotFound());
         }
 
@@ -52,7 +49,7 @@ public class RefreshTokenCommandHandler(
 
         try
         {
-            var result = await authenticationService.GetRefreshTokenAsync(user, jwtToken, expiryDate, request.RefreshToken);
+            var result = await authenticationService.GetRefreshTokenAsync(user, validation.OldJwtId, request.RefreshToken);
             return Success(result);
         }
         catch (UnauthorizedAccessException)

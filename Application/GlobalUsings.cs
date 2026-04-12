@@ -1,4 +1,5 @@
 global using Application.Common.Bases;
+global using Application.Common.Models;
 global using Application.Common.Constants;
 global using Application.Common.DTOs;
 global using Application.Common.Errors;

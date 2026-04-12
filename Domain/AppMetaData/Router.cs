@@ -50,12 +50,12 @@ namespace Domain.AppMetaData
             public const string CreateVendor = Prefix + "createVendor";
 
             // Unified Users Management
-            public const string UsersPaginated = Prefix + "users/paginated";
-            public const string GetUserById = Prefix + "users/" + SingleRoute;
-            public const string CreateUser = Prefix + "users/create";
-            public const string EditUser = Prefix + "users/edit";
-            public const string DeleteUser = Prefix + "users/" + SingleRoute;
-            public const string ToggleUserStatus = Prefix + "users/" + SingleRoute + "/toggleStatus";
+            public const string UsersPaginated = Prefix + "paginated";
+            public const string GetUserById = Prefix + SingleRoute;
+            public const string CreateUser = Prefix + "create";
+            public const string EditUser = Prefix + "edit";
+            public const string DeleteUser = Prefix + SingleRoute;
+            public const string ToggleUserStatus = Prefix + SingleRoute + "/toggleStatus";
         }
 
         public static class CategoryRouting
@@ -230,7 +230,8 @@ namespace Domain.AppMetaData
             public const string Create = Prefix + "create";
             public const string Edit = Prefix + "edit";
             public const string Delete = Prefix + SingleRoute;
-            public const string ToggleStatus = Prefix + "toggleStatus";
+            /// <summary>POST toggles profile soft-delete (same pattern as customer).</summary>
+            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
         }
 
         public static class AdminRouting
@@ -241,7 +242,7 @@ namespace Domain.AppMetaData
             public const string Create = Prefix + "create";
             public const string Edit = Prefix + "edit";
             public const string Delete = Prefix + SingleRoute;
-            public const string ToggleStatus = Prefix + "toggleStatus";
+            public const string ToggleStatus = Prefix + "toggleStatus/" + SingleRoute;
         }
 
         public static class EmployeeRouting

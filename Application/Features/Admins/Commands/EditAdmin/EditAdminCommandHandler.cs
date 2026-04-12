@@ -35,7 +35,7 @@ public class EditAdminCommandHandler(
         appUser.UserName = request.UserName;
         appUser.Email = request.Email;
         appUser.PhoneNumber = request.PhoneNumber;
-        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
         appUser.SetDisplayName(fullName);
 
         if (request.ProfileImage != null)

@@ -1,4 +1,5 @@
 using Application.Common.Bases;
+using Application.Common.Constants;
 using Application.Common.Errors;
 using Infrastructure.Data.Identity;
 using Infrastructure.RepositoriesHandlers.UnitOfWork;
@@ -7,7 +8,8 @@ namespace Application.Features.Customers.Commands.EditCustomer;
 
 public class EditCustomerCommandHandler(
     IUnitOfWork unitOfWork,
-    UserManager<AppUser> userManager) : ApiResponseHandler(),
+    UserManager<AppUser> userManager,
+    IFileUploadService fileUploadService) : ApiResponseHandler(),
     IRequestHandler<EditCustomerCommand, ApiResponse<string>>
 {
     public async Task<ApiResponse<string>> Handle(EditCustomerCommand request, CancellationToken cancellationToken)
@@ -31,8 +33,23 @@ public class EditCustomerCommandHandler(
         appUser.UserName = request.UserName;
         appUser.Email = request.Email;
         appUser.PhoneNumber = request.PhoneNumber;
-        var fullName = $"{request.FirstName} {request.LastName}".Trim();
+        var fullName = request.FullName?.Trim() ?? string.Empty;
         appUser.SetDisplayName(fullName);
+
+        if (request.ProfileImage != null)
+        {
+            await fileUploadService.TryDeleteFileAsync(appUser.ProfileImage, cancellationToken);
+            var profileImageUrls = await fileUploadService.UploadAndGetUrlsAsync(
+                new[] { request.ProfileImage },
+                FileLocations.Users,
+                appUser.Id,
+                childFolder: null,
+                overwrite: true,
+                cancellationToken: cancellationToken);
+
+            if (profileImageUrls.Count > 0)
+                appUser.ProfileImage = profileImageUrls[0];
+        }
 
         customer.ChangeName(fullName, appUser.Id);
         if (request.Gender.HasValue)
@@ -51,4 +68,3 @@ public class EditCustomerCommandHandler(
         return Edit("");
     }
 }
-

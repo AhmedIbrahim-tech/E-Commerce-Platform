@@ -12,11 +12,8 @@ public class ShippingAddressConfiguration : IEntityTypeConfiguration<ShippingAdd
             .ValueGeneratedOnAdd()
             .ConfigureGuid(isRequired: true);
 
-        builder.Property(s => s.FirstName)
-            .ConfigureString(100, isRequired: true);
-
-        builder.Property(s => s.LastName)
-            .ConfigureString(100, isRequired: true);
+        builder.Property(s => s.FullName)
+            .ConfigureString(150, isRequired: true);
 
         builder.Property(s => s.Street)
             .ConfigureString(150, isRequired: true);
@@ -29,12 +26,6 @@ public class ShippingAddressConfiguration : IEntityTypeConfiguration<ShippingAdd
 
         builder.Property(s => s.CustomerId)
             .ConfigureGuid(isRequired: true);
-
-        // Foreign key relationship
-        //builder.HasOne(s => s.Customer)
-        //    .WithMany(c => c.ShippingAddresses)
-        //    .HasForeignKey(s => s.CustomerId)
-        //    .OnDelete(DeleteBehavior.Cascade);
 
         // Index for customer lookup
         builder.HasIndex(s => s.CustomerId)
